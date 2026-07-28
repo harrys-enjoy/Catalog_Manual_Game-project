@@ -55,3 +55,19 @@ test('GET /health가 모델 호출 없이 상태를 반환한다', async () => {
   assert.equal(response.status, 200);
   assert.deepEqual(body, { status: 'ok', service: 'game-qna-api' });
 });
+
+test('허용된 출처의 CORS preflight에 응답한다', async () => {
+  const server = createServer({
+    corsOrigin: 'https://productivity.example',
+    orchestrator: { ask: async () => ({}) },
+  }).listen(0);
+  await once(server, 'listening');
+  const { port } = server.address();
+  const response = await fetch(`http://127.0.0.1:${port}/api/ask`, {
+    method: 'OPTIONS',
+    headers: { origin: 'https://productivity.example', 'access-control-request-method': 'POST' },
+  });
+  server.close();
+  assert.equal(response.status, 204);
+  assert.equal(response.headers.get('access-control-allow-origin'), 'https://productivity.example');
+});

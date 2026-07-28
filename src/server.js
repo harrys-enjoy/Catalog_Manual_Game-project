@@ -10,9 +10,21 @@ import { createRequestId, parseJsonBody, validateAskRequest } from './request.js
 
 const MAX_BODY_BYTES = 1_048_576;
 
-function writeJson(response, statusCode, body) {
-  response.writeHead(statusCode, { 'content-type': 'application/json; charset=utf-8' });
+function writeJson(response, statusCode, body, headers = {}) {
+  response.writeHead(statusCode, { 'content-type': 'application/json; charset=utf-8', ...headers });
   response.end(JSON.stringify(body));
+}
+
+function corsHeaders(request, corsOrigin) {
+  const origin = request.headers.origin;
+  return corsOrigin && origin === corsOrigin
+    ? {
+      'access-control-allow-origin': corsOrigin,
+      'access-control-allow-methods': 'GET, POST, OPTIONS',
+      'access-control-allow-headers': 'content-type',
+      vary: 'Origin',
+    }
+    : {};
 }
 
 function readBody(request) {
@@ -47,7 +59,7 @@ export function createDefaultOrchestrator({ modelAdapter = new MockModelAdapter(
   });
 }
 
-export function createServer({ orchestrator, modelAdapter, remoteAgents = {} } = {}) {
+export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, corsOrigin = process.env.CORS_ORIGIN || '' } = {}) {
   orchestrator ??= createDefaultOrchestrator({ modelAdapter, remoteAgents });
   if (!orchestrator || typeof orchestrator.ask !== 'function') {
     throw new TypeError('orchestrator.ask가 필요합니다.');
@@ -55,9 +67,15 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {} } =
 
   return http.createServer(async (request, response) => {
     const requestId = createRequestId();
+    const headers = corsHeaders(request, corsOrigin);
     try {
+      if (request.method === 'OPTIONS' && request.url === '/api/ask' && Object.keys(headers).length > 0) {
+        response.writeHead(204, headers);
+        response.end();
+        return;
+      }
       if (request.method === 'GET' && request.url === '/health') {
-        writeJson(response, 200, { status: 'ok', service: 'game-qna-api' });
+        writeJson(response, 200, { status: 'ok', service: 'game-qna-api' }, headers);
         return;
       }
       if (request.method !== 'POST' || request.url !== '/api/ask') {
@@ -65,14 +83,14 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {} } =
       }
       const body = validateAskRequest(parseJsonBody(await readBody(request)));
       const result = await orchestrator.ask({ ...body, requestId });
-      writeJson(response, 200, result);
+      writeJson(response, 200, result, headers);
     } catch (error) {
       const appError = error instanceof AppError
         ? error
         : new AppError('INTERNAL_ERROR', '서버에서 요청을 처리하지 못했습니다.', 500);
       writeJson(response, appError.statusCode, {
         error: { code: appError.code, message: appError.message, requestId },
-      });
+      }, headers);
     }
   });
 }

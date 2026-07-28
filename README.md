@@ -118,5 +118,6 @@ const server = createServer({
 - API 키는 클라이언트나 저장소에 넣지 않습니다.
 - 모든 응답에는 추적용 `requestId`가 포함됩니다.
 - 모델 제공자가 측정하지 않은 토큰 수는 임의로 표시하지 않습니다.
+- 브라우저 호출은 `CORS_ORIGIN`에 지정된 단일 출처만 허용합니다. 기본값은 비활성입니다.
 
 전체 HTTP 계약은 [`docs/api/openapi.yaml`](docs/api/openapi.yaml)에서 확인할 수 있습니다.
