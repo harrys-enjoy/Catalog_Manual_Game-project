@@ -25,13 +25,20 @@ export class LangChainModelAdapter {
 
   async generate({ system, question, evidence = [], maxOutputChars = 800 }) {
     const evidenceText = evidence.length > 0 ? evidence.join('\n') : '근거 없음';
-    const response = await this.model.invoke([
-      { role: 'system', content: system },
-      { role: 'user', content: `질문: ${question}\n근거:\n${evidenceText}` },
-    ]);
+    let response;
+    try {
+      response = await this.model.invoke([
+        { role: 'system', content: system },
+        { role: 'user', content: `질문: ${question}\n근거:\n${evidenceText}` },
+      ]);
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('MODEL_UNAVAILABLE', 'LLM 모델이 요청을 처리하지 못했습니다.', 503);
+    }
     return {
       answer: readTextContent(response?.content).slice(0, maxOutputChars),
       usage: readUsage(response),
     };
   }
 }
+import { AppError } from './errors.js';
