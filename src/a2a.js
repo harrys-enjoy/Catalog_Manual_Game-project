@@ -44,3 +44,40 @@ export function createHttpAgent({ agentName, endpoint, timeoutMs = 5000, fetchIm
     },
   };
 }
+
+export async function discoverAgentCard({ cardUrl, timeoutMs = 5000, fetchImpl = fetch }) {
+  let response;
+  try {
+    response = await fetchImpl(cardUrl, {
+      method: 'GET',
+      headers: { accept: 'application/json' },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch {
+    throw new AppError('MODEL_UNAVAILABLE', 'Agent Card에 연결할 수 없습니다.', 503);
+  }
+  if (!response.ok) {
+    throw new AppError('MODEL_UNAVAILABLE', 'Agent Card를 가져오지 못했습니다.', 503);
+  }
+  let card;
+  try {
+    card = await response.json();
+  } catch {
+    throw new AppError('MODEL_UNAVAILABLE', 'Agent Card JSON을 읽지 못했습니다.', 503);
+  }
+  if (!card || typeof card.url !== 'string' || !card.url) {
+    throw new AppError('MODEL_UNAVAILABLE', 'Agent Card에 유효한 url이 없습니다.', 503);
+  }
+  return card;
+}
+
+export function createDiscoveredHttpAgent({ agentName, cardUrl, timeoutMs = 5000, fetchImpl = fetch }) {
+  let agentPromise;
+  return {
+    async ask(input) {
+      agentPromise ??= discoverAgentCard({ cardUrl, timeoutMs, fetchImpl })
+        .then((card) => createHttpAgent({ agentName, endpoint: card.url, timeoutMs, fetchImpl }));
+      return (await agentPromise).ask(input);
+    },
+  };
+}
