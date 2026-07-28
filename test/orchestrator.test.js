@@ -85,3 +85,18 @@ test('dev-guide의 기획 질문은 planning-guide로 라우팅한다', async ()
   assert.equal(result.agent, 'planning-guide');
   assert.deepEqual(called, ['planning-guide']);
 });
+
+test('오케스트레이터는 토큰 절감 경로별 호출 수를 제공한다', async () => {
+  const orchestrator = createOrchestrator({
+    lookup: (mode) => mode === 'codex' ? { answer: '직접 조회', sources: [] } : null,
+    agents: new Map([['lore', { ask: async () => ({ answer: '에이전트', agent: 'lore', sources: [], usage: null }) }]]),
+  });
+  await orchestrator.ask({ requestId: 'req_1', mode: 'codex', question: '도감', context: {} });
+  await orchestrator.ask({ requestId: 'req_2', mode: 'lore', question: '세계관', context: {} });
+  await orchestrator.ask({ requestId: 'req_3', mode: 'lore', question: '세계관', context: {} });
+  assert.deepEqual(orchestrator.getMetrics(), {
+    cacheHits: 1,
+    directKnowledgeResponses: 1,
+    agentCalls: 1,
+  });
+});

@@ -56,6 +56,22 @@ test('GET /health가 모델 호출 없이 상태를 반환한다', async () => {
   assert.deepEqual(body, { status: 'ok', service: 'game-qna-api' });
 });
 
+test('GET /metrics가 토큰 절감 지표를 반환한다', async () => {
+  const server = createServer({
+    orchestrator: {
+      ask: async () => ({}),
+      getMetrics: () => ({ cacheHits: 3, directKnowledgeResponses: 5, agentCalls: 2 }),
+    },
+  }).listen(0);
+  await once(server, 'listening');
+  const { port } = server.address();
+  const response = await fetch(`http://127.0.0.1:${port}/metrics`);
+  const body = await response.json();
+  server.close();
+  assert.equal(response.status, 200);
+  assert.deepEqual(body, { cacheHits: 3, directKnowledgeResponses: 5, agentCalls: 2 });
+});
+
 test('허용된 출처의 CORS preflight에 응답한다', async () => {
   const server = createServer({
     corsOrigin: 'https://productivity.example',

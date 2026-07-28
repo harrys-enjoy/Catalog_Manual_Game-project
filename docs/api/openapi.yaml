@@ -16,6 +16,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+  /metrics:
+    get:
+      summary: 토큰 절감 경로 지표 확인
+      responses:
+        '200':
+          description: 프로세스 시작 후 누적된 호출 지표
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
   /api/ask:
     post:
       summary: 게임 Q&A 요청
@@ -167,3 +177,13 @@ components:
         service:
           type: string
           example: game-qna-api
+    MetricsResponse:
+      type: object
+      required: [cacheHits, directKnowledgeResponses, agentCalls]
+      properties:
+        cacheHits:
+          type: integer
+        directKnowledgeResponses:
+          type: integer
+        agentCalls:
+          type: integer

@@ -82,6 +82,14 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, co
         writeJson(response, 200, { status: 'ok', service: 'game-qna-api' }, headers);
         return;
       }
+      if (request.method === 'GET' && request.url === '/metrics') {
+        writeJson(response, 200, orchestrator.getMetrics?.() ?? {
+          cacheHits: 0,
+          directKnowledgeResponses: 0,
+          agentCalls: 0,
+        }, headers);
+        return;
+      }
       if (request.method === 'GET' && request.url === '/.well-known/agent-card.json') {
         writeJson(response, 200, createAgentCard({ publicUrl, requiresAuth: Boolean(apiKey) }), headers);
         return;

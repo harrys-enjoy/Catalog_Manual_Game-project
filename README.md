@@ -37,6 +37,14 @@ GET /health
 
 응답: `{"status":"ok","service":"game-qna-api"}`
 
+토큰 절감 경로 확인:
+
+```http
+GET /metrics
+```
+
+`cacheHits`, `directKnowledgeResponses`, `agentCalls`를 반환합니다. 프로세스 시작 후 누적된 수치이며 질문·사용자·프롬프트 원문은 포함하지 않습니다.
+
 ```http
 POST /api/ask
 Content-Type: application/json

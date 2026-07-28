@@ -21,6 +21,7 @@ function cacheKey(request) {
 
 export function createOrchestrator({ agents, lookup, cacheTtlMs = 60_000, cacheMaxEntries = 100 }) {
   const cache = new Map();
+  const metrics = { cacheHits: 0, directKnowledgeResponses: 0, agentCalls: 0 };
 
   function readCache(request) {
     if (cacheTtlMs <= 0) return null;
@@ -30,6 +31,7 @@ export function createOrchestrator({ agents, lookup, cacheTtlMs = 60_000, cacheM
       cache.delete(cacheKey(request));
       return null;
     }
+    metrics.cacheHits += 1;
     return { ...entry.response, requestId: request.requestId };
   }
 
@@ -47,6 +49,7 @@ export function createOrchestrator({ agents, lookup, cacheTtlMs = 60_000, cacheM
 
       const direct = lookup(request.mode, request.question);
       if (direct) {
+        metrics.directKnowledgeResponses += 1;
         const response = {
           answer: direct.answer,
           mode: request.mode,
@@ -70,6 +73,7 @@ export function createOrchestrator({ agents, lookup, cacheTtlMs = 60_000, cacheM
       if (!agent) {
         throw new AppError('INTERNAL_ERROR', `에이전트를 사용할 수 없습니다: ${agentName}`, 500);
       }
+      metrics.agentCalls += 1;
       const result = await agent.ask({ ...request, evidence: request.evidence ?? [] });
       const response = {
         answer: result.answer,
@@ -81,6 +85,9 @@ export function createOrchestrator({ agents, lookup, cacheTtlMs = 60_000, cacheM
       };
       writeCache(request, response);
       return response;
+    },
+    getMetrics() {
+      return { ...metrics };
     },
   };
 }
