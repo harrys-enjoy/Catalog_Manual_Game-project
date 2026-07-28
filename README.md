@@ -128,6 +128,8 @@ const server = createServer({
 ## 외부 연동 원칙
 
 - 업무생산성 메인페이지와 아침 업무 브리핑 UI는 이 프로젝트가 만들지 않습니다.
+- MCP Host와 중앙 업무 오케스트레이션은 기업 업무생산성 프로젝트가 담당합니다.
+- 이 프로젝트는 MCP Host를 구현하지 않고 REST API와 A2A 전문 에이전트로 연결됩니다.
 - 외부 서비스는 `POST /api/ask`를 호출하고 `context.workContext`에 호출 맥락을 전달합니다.
 - API 키는 클라이언트나 저장소에 넣지 않습니다.
 - `API_KEY`를 설정하면 `/api/ask`에 `Authorization: Bearer <API_KEY>`가 필요합니다. `/health`는 공개입니다.
