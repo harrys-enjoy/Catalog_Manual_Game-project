@@ -26,6 +26,15 @@ test('독자 세계관의 세력과 사건을 직접 조회한다', () => {
   );
 });
 
+test('독자 세계관 항목에는 original:lore 표식을 포함한다', () => {
+  const result = lookupKnowledge('lore', '유리별은 어떻게 생겼나요?');
+  assert.deepEqual(result.sources, [
+    'lore:glass-star-origin',
+    'original:lore',
+    'https://opengameart.org/content/starfields',
+  ]);
+});
+
 test('codex 질문은 모델 없이 도감 데이터를 반환한다', () => {
   const result = lookupKnowledge('codex', '루멘의 약점은 무엇인가?');
   assert.equal(result.answer, '루멘의 약점은 냉기 속성입니다.');

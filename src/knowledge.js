@@ -11,8 +11,8 @@ export function lookupKnowledge(mode, question) {
   const item = entries.find((entry) => entry.keywords.some((keyword) => question.includes(keyword)));
   if (!item) return null;
   const sourceUrl = sourceById.get(item.sourceRef)?.sourceUrl;
-  return {
-    answer: item.answer,
-    sources: [`${mode}:${item.id}`, ...(sourceUrl ? [sourceUrl] : [])],
-  };
+  const sources = [`${mode}:${item.id}`];
+  if (item.originalContent && mode === 'lore') sources.push('original:lore');
+  if (sourceUrl) sources.push(sourceUrl);
+  return { answer: item.answer, sources };
 }
