@@ -64,6 +64,24 @@ test('원격 에이전트 오류는 MODEL_UNAVAILABLE로 변환한다', async ()
   );
 });
 
+test('원격 에이전트 timeout은 MODEL_UNAVAILABLE로 변환한다', async () => {
+  let receivedSignal;
+  const agent = createHttpAgent({
+    agentName: 'slow-lore',
+    endpoint: 'https://agent.example/a2a',
+    timeoutMs: 1,
+    fetchImpl: async (_endpoint, options) => new Promise((resolve, reject) => {
+      receivedSignal = options.signal;
+      options.signal.addEventListener('abort', () => reject(new Error('timeout')));
+    }),
+  });
+  await assert.rejects(
+    () => agent.ask({ requestId: 'req_test', mode: 'lore', question: '질문', context: {}, evidence: [] }),
+    (error) => error.code === 'MODEL_UNAVAILABLE' && error.statusCode === 503,
+  );
+  assert.equal(receivedSignal instanceof AbortSignal, true);
+});
+
 test('기본 오케스트레이터는 주입된 원격 lore agent를 사용한다', async () => {
   const orchestrator = createDefaultOrchestrator({
     remoteAgents: {

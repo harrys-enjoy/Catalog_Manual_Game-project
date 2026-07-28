@@ -17,7 +17,7 @@ function normalizeAgentResponse(payload, agentName) {
   };
 }
 
-export function createHttpAgent({ agentName, endpoint, fetchImpl = fetch }) {
+export function createHttpAgent({ agentName, endpoint, timeoutMs = 5000, fetchImpl = fetch }) {
   if (!agentName || !endpoint) throw new TypeError('agentName과 endpoint가 필요합니다.');
   return {
     async ask(input) {
@@ -26,6 +26,7 @@ export function createHttpAgent({ agentName, endpoint, fetchImpl = fetch }) {
         response = await fetchImpl(endpoint, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
+          signal: AbortSignal.timeout(timeoutMs),
           body: JSON.stringify(createAgentRequest(input)),
         });
       } catch {
