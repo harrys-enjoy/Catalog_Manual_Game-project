@@ -16,6 +16,7 @@ function cacheKey(request) {
     context.projectId ?? '',
     context.userId ?? '',
     context.workContext ?? '',
+    request.evidence ?? [],
   ]);
 }
 

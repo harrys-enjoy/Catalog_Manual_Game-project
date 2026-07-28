@@ -100,3 +100,23 @@ test('오케스트레이터는 토큰 절감 경로별 호출 수를 제공한�
     agentCalls: 1,
   });
 });
+
+test('근거 자료가 다르면 같은 질문도 별도로 처리한다', async () => {
+  let calls = 0;
+  const orchestrator = createOrchestrator({
+    lookup: () => null,
+    agents: new Map([['lore', { ask: async ({ evidence }) => {
+      calls += 1;
+      return { answer: evidence.join(','), agent: 'lore', sources: [], usage: null };
+    } }]]),
+  });
+  const first = await orchestrator.ask({
+    requestId: 'req_1', mode: 'lore', question: '세력 관계', context: {}, evidence: ['근거 A'],
+  });
+  const second = await orchestrator.ask({
+    requestId: 'req_2', mode: 'lore', question: '세력 관계', context: {}, evidence: ['근거 B'],
+  });
+  assert.equal(calls, 2);
+  assert.equal(first.answer, '근거 A');
+  assert.equal(second.answer, '근거 B');
+});
