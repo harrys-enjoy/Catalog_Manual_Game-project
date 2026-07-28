@@ -1,0 +1,74 @@
+{
+  "catalog": [
+    {
+      "id": "oga-rpg-tileset",
+      "name": "RPG Tileset",
+      "keywords": ["RPG Tileset", "RPG 타일셋", "타일셋"],
+      "answer": "OpenGameArt의 RPG Tileset은 16x16 RPG용 타일셋으로, 기사·궁수·마법사·동굴·건물·물·몬스터 등의 태그가 공개되어 있습니다.",
+      "sourceRef": "oga-rpg-tileset"
+    },
+    {
+      "id": "ember-village",
+      "name": "잿불 마을",
+      "keywords": ["잿불 마을", "마을"],
+      "answer": "잿불 마을은 화산 지대 동쪽에 있는 거점입니다."
+    }
+  ],
+  "codex": [
+    {
+      "id": "oga-free-game-objects",
+      "name": "Free Game Objects",
+      "keywords": ["무료 게임 오브젝트", "Free Game Objects", "게임 오브젝트"],
+      "answer": "OpenGameArt의 Free Game Objects는 나무, 상자, 플랫폼, 문 등을 포함한 100개 이상의 2D 게임 오브젝트 모음입니다.",
+      "sourceRef": "oga-free-game-objects"
+    },
+    {
+      "id": "lumens",
+      "name": "루멘",
+      "keywords": ["루멘", "약점"],
+      "answer": "루멘의 약점은 냉기 속성입니다."
+    }
+  ],
+  "lore": [
+    {
+      "id": "glass-star-origin",
+      "name": "유리별의 기원",
+      "keywords": ["유리별", "유리별의 기원"],
+      "answer": "유리별은 오래전 상층 대기가 굳어 만들어진 거대한 빛의 결정체라는 독자 설정입니다. 지상 항로는 유리별의 빛을 기준으로 방향을 정합니다.",
+      "sourceRef": "oga-starfields",
+      "originalContent": true,
+      "inspirationSources": ["oga-starfields"]
+    },
+    {
+      "id": "route-watch",
+      "name": "항로 감시단",
+      "keywords": ["항로 감시단", "감시단"],
+      "answer": "항로 감시단은 유리별의 파편과 지상 항로를 관리하는 중립 세력이라는 독자 설정입니다. 어느 도시에도 속하지 않으며 탐사대의 통행 기록을 보관합니다.",
+      "sourceRef": "oga-starfields",
+      "originalContent": true,
+      "inspirationSources": ["oga-starfields"]
+    },
+    {
+      "id": "faded-route-incident",
+      "name": "빛바랜 항로 사건",
+      "keywords": ["빛바랜 항로 사건", "빛바랜 항로"],
+      "answer": "빛바랜 항로 사건은 유리별의 빛이 약해져 오래된 탐사 항로가 끊긴 사건이라는 독자 설정입니다. 이후 항로 감시단과 각 도시 탐사대 사이에 새로운 길의 관리권을 둘러싼 갈등이 생겼습니다.",
+      "sourceRef": "oga-starfields",
+      "originalContent": true,
+      "inspirationSources": ["oga-starfields"]
+    },
+    {
+      "id": "oga-starfields",
+      "name": "Starfields",
+      "keywords": ["Starfields", "스타필드 배경", "우주 배경"],
+      "answer": "OpenGameArt의 Starfields는 우주와 별을 주제로 한 배경 자료입니다. 이 항목은 세계관 서사 대신 시각적 세계 설정 참고용으로 제공합니다.",
+      "sourceRef": "oga-starfields"
+    },
+    {
+      "id": "ash-covenant",
+      "name": "잿불 협약",
+      "keywords": ["잿불 협약"],
+      "answer": "잿불 협약은 화산 지대의 도시를 보호하기 위해 결성된 세력입니다."
+    }
+  ]
+}
