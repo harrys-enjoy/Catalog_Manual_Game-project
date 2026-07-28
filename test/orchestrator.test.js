@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createAgentRegistry } from '../src/agents.js';
 import { MockModelAdapter } from '../src/model.js';
+import { createOrchestrator } from '../src/orchestrator.js';
 
 test('art-guide agent는 제한된 컨텍스트로 응답한다', async () => {
   const registry = createAgentRegistry({ modelAdapter: new MockModelAdapter() });
@@ -20,4 +21,30 @@ test('art-guide agent는 제한된 컨텍스트로 응답한다', async () => {
 test('lore agent는 등록된 에이전트로 조회할 수 있다', () => {
   const registry = createAgentRegistry({ modelAdapter: new MockModelAdapter() });
   assert.equal(typeof registry.get('lore').ask, 'function');
+});
+
+test('구조화 데이터 응답은 모델을 호출하지 않는다', async () => {
+  let calls = 0;
+  const orchestrator = createOrchestrator({
+    lookup: () => ({ answer: '직접 조회 결과', sources: ['codex:test'] }),
+    agents: new Map([['codex', { ask: async () => { calls += 1; return {}; } }]]),
+  });
+  const result = await orchestrator.ask({
+    requestId: 'req_test', mode: 'codex', question: '도감 질문', context: {},
+  });
+  assert.equal(result.agent, 'knowledge');
+  assert.equal(calls, 0);
+});
+
+test('lore 질문은 lore agent만 호출한다', async () => {
+  const called = [];
+  const orchestrator = createOrchestrator({
+    lookup: () => null,
+    agents: new Map([
+      ['lore', { ask: async () => { called.push('lore'); return { answer: '세계관 답변', agent: 'lore', sources: [], usage: null, confidence: null }; } }],
+      ['art-guide', { ask: async () => { called.push('art-guide'); return {}; } }],
+    ]),
+  });
+  await orchestrator.ask({ requestId: 'req_test', mode: 'lore', question: '세력 관계', context: {} });
+  assert.deepEqual(called, ['lore']);
 });
