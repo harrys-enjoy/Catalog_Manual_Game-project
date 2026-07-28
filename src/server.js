@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { createHttpAgent } from './a2a.js';
+import { createAgentCard } from './agent-card.js';
 import { createAgentRegistry } from './agents.js';
 import { AppError } from './errors.js';
 import { lookupKnowledge } from './knowledge.js';
@@ -62,7 +63,7 @@ export function createDefaultOrchestrator({ modelAdapter = createModelAdapterFro
   });
 }
 
-export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, corsOrigin = process.env.CORS_ORIGIN || '', apiKey = process.env.API_KEY || '' } = {}) {
+export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, corsOrigin = process.env.CORS_ORIGIN || '', apiKey = process.env.API_KEY || '', publicUrl = process.env.AGENT_PUBLIC_URL || 'http://localhost:3000' } = {}) {
   orchestrator ??= createDefaultOrchestrator({ modelAdapter, remoteAgents });
   if (!orchestrator || typeof orchestrator.ask !== 'function') {
     throw new TypeError('orchestrator.ask가 필요합니다.');
@@ -79,6 +80,10 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, co
       }
       if (request.method === 'GET' && request.url === '/health') {
         writeJson(response, 200, { status: 'ok', service: 'game-qna-api' }, headers);
+        return;
+      }
+      if (request.method === 'GET' && request.url === '/.well-known/agent-card.json') {
+        writeJson(response, 200, createAgentCard({ publicUrl }), headers);
         return;
       }
       if (apiKey && ['/api/ask', '/a2a'].includes(request.url) && request.headers.authorization !== `Bearer ${apiKey}`) {

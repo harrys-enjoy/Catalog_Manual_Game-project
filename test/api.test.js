@@ -127,3 +127,15 @@ test('POST /a2a가 AgentResponse 형식으로 응답한다', async () => {
     confidence: null,
   });
 });
+
+test('well-known Agent Card를 공개한다', async () => {
+  const server = createServer({ publicUrl: 'https://game.example', orchestrator: { ask: async () => ({}) } }).listen(0);
+  await once(server, 'listening');
+  const { port } = server.address();
+  const response = await fetch(`http://127.0.0.1:${port}/.well-known/agent-card.json`);
+  const body = await response.json();
+  server.close();
+  assert.equal(response.status, 200);
+  assert.equal(body.url, 'https://game.example/a2a');
+  assert.equal(body.skills.length, 4);
+});

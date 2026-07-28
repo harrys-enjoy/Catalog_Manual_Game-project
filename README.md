@@ -140,3 +140,5 @@ const server = createServer({
 전체 HTTP 계약은 [`docs/api/openapi.yaml`](docs/api/openapi.yaml)에서 확인할 수 있습니다.
 
 기업 업무생산성 프로젝트는 전문 에이전트 호출 시 `POST /a2a`를 사용합니다. `/api/ask`와 같은 Q&A 입력을 받고 `AgentResponse`에 `confidence`를 추가해 반환합니다.
+
+에이전트 발견 정보는 `GET /.well-known/agent-card.json`에서 제공하며, 공개 URL은 `AGENT_PUBLIC_URL`로 설정합니다. 카드에는 API 키나 모델 키를 포함하지 않습니다.
