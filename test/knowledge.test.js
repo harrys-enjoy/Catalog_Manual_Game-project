@@ -1,6 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { lookupKnowledge } from '../src/knowledge.js';
+import { lookupKnowledge, validateKnowledgeSources } from '../src/knowledge.js';
+
+test('출처가 있는 지식 항목은 CC0 출처를 참조해야 한다', () => {
+  assert.throws(
+    () => validateKnowledgeSources(
+      { lore: [{ id: 'lore-1', sourceRef: 'non-cc0' }] },
+      [{ id: 'non-cc0', license: 'CC-BY-4.0' }],
+    ),
+    /CC0/,
+  );
+});
+
+test('존재하지 않는 출처 ID는 거부한다', () => {
+  assert.throws(
+    () => validateKnowledgeSources(
+      { codex: [{ id: 'codex-1', sourceRef: 'missing-source' }] },
+      [],
+    ),
+    /missing-source/,
+  );
+});
 
 test('카탈로그의 키워드 하나만 포함해도 항목을 찾는다', () => {
   const result = lookupKnowledge('catalog', '마을 정보를 보여줘');

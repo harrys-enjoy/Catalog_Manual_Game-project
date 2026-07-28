@@ -4,7 +4,22 @@ import { fileURLToPath } from 'node:url';
 const dataPath = fileURLToPath(new URL('../data/knowledge.json', import.meta.url));
 const knowledge = JSON.parse(readFileSync(dataPath, 'utf8'));
 const sourcesPath = fileURLToPath(new URL('../data/sources.json', import.meta.url));
-const sourceById = new Map(JSON.parse(readFileSync(sourcesPath, 'utf8')).map((source) => [source.id, source]));
+const sourceData = JSON.parse(readFileSync(sourcesPath, 'utf8'));
+
+export function validateKnowledgeSources(data, sources) {
+  const sourceById = new Map(sources.map((source) => [source.id, source]));
+  for (const entries of Object.values(data)) {
+    for (const entry of entries) {
+      if (!entry.sourceRef) continue;
+      const source = sourceById.get(entry.sourceRef);
+      if (!source) throw new Error(`출처 ID를 찾을 수 없습니다: ${entry.sourceRef}`);
+      if (source.license !== 'CC0') throw new Error(`출처는 CC0 라이선스여야 합니다: ${entry.sourceRef}`);
+    }
+  }
+}
+
+validateKnowledgeSources(knowledge, sourceData);
+const sourceById = new Map(sourceData.map((source) => [source.id, source]));
 
 export function lookupKnowledge(mode, question) {
   const entries = knowledge[mode] ?? [];
