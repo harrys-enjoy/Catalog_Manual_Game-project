@@ -1,6 +1,31 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createHttpAgent, createAgentRequest, createDiscoveredHttpAgent, discoverAgentCard } from '../src/a2a.js';
+import { createHttpAgent, createAgentRequest, createDiscoveredHttpAgent, discoverAgentCard, createHttpJsonAgent } from '../src/a2a.js';
+
+test('HTTP+JSON A2A 에이전트는 표준 메시지 형식으로 요청한다', async () => {
+  let received;
+  const agent = createHttpJsonAgent({
+    agentName: 'lore-agent',
+    endpoint: 'https://agent.example/message:send',
+    fetchImpl: async (url, options) => {
+      received = { url, options: JSON.parse(options.body) };
+      return new Response(JSON.stringify({
+        message: { messageId: 'req_1', role: 'ROLE_AGENT', parts: [{ text: '세계관 응답' }] },
+      }), { status: 200 });
+    },
+  });
+
+  const response = await agent.ask({
+    requestId: 'req_1', mode: 'lore', question: '왕국의 역사', context: {}, evidence: [],
+  });
+
+  assert.equal(received.url, 'https://agent.example/message:send');
+  assert.equal(received.options.message.role, 'ROLE_USER');
+  assert.equal(received.options.message.parts[0].text, '왕국의 역사');
+  assert.deepEqual(response, {
+    answer: '세계관 응답', mode: 'lore', agent: 'lore-agent', sources: [], usage: null, requestId: 'req_1', confidence: null,
+  });
+});
 import { createDefaultOrchestrator } from '../src/server.js';
 
 test('A2A 요청을 공통 AgentRequest 형식으로 만든다', () => {

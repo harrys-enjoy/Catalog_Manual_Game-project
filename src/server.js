@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { fileURLToPath } from 'node:url';
 import { createHttpAgent } from './a2a.js';
+import { toAgentRequest, toSendMessageResponse } from './a2a-http.js';
 import { createAgentCard } from './agent-card.js';
 import { createAgentRegistry } from './agents.js';
 import { AppError } from './errors.js';
@@ -14,8 +15,8 @@ loadEnvFile();
 
 const MAX_BODY_BYTES = 1_048_576;
 
-function writeJson(response, statusCode, body, headers = {}) {
-  response.writeHead(statusCode, { 'content-type': 'application/json; charset=utf-8', ...headers });
+function writeJson(response, statusCode, body, headers = {}, contentType = 'application/json; charset=utf-8') {
+  response.writeHead(statusCode, { 'content-type': contentType, ...headers });
   response.end(JSON.stringify(body));
 }
 
@@ -73,7 +74,7 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, co
     const requestId = createRequestId();
     const headers = corsHeaders(request, corsOrigin);
     try {
-      if (request.method === 'OPTIONS' && ['/api/ask', '/a2a'].includes(request.url) && Object.keys(headers).length > 0) {
+      if (request.method === 'OPTIONS' && ['/api/ask', '/a2a', '/message:send'].includes(request.url) && Object.keys(headers).length > 0) {
         response.writeHead(204, headers);
         response.end();
         return;
@@ -94,18 +95,24 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, co
         writeJson(response, 200, createAgentCard({ publicUrl, requiresAuth: Boolean(apiKey) }), headers);
         return;
       }
-      if (apiKey && ['/api/ask', '/a2a'].includes(request.url) && request.headers.authorization !== `Bearer ${apiKey}`) {
+      if (apiKey && ['/api/ask', '/a2a', '/message:send'].includes(request.url) && request.headers.authorization !== `Bearer ${apiKey}`) {
         throw new AppError('UNAUTHORIZED', '유효한 Bearer 인증이 필요합니다.', 401);
       }
       const isAskRequest = request.method === 'POST' && request.url === '/api/ask';
       const isA2ARequest = request.method === 'POST' && request.url === '/a2a';
-      if (!isAskRequest && !isA2ARequest) {
+      const isA2AHttpRequest = request.method === 'POST' && request.url === '/message:send';
+      if (!isAskRequest && !isA2ARequest && !isA2AHttpRequest) {
         throw new AppError('INTERNAL_ERROR', '요청 경로를 찾을 수 없습니다.', 404);
       }
       const parsed = parseJsonBody(await readBody(request));
-      const body = isA2ARequest ? validateAgentRequest(parsed) : validateAskRequest(parsed);
-      const result = await orchestrator.ask({ ...body, requestId: isA2ARequest ? body.requestId : requestId });
-      writeJson(response, 200, isA2ARequest ? { ...result, confidence: null } : result, headers);
+      const body = isA2AHttpRequest
+        ? toAgentRequest(parsed)
+        : isA2ARequest ? validateAgentRequest(parsed) : validateAskRequest(parsed);
+      const result = await orchestrator.ask({ ...body, requestId: isAskRequest ? requestId : body.requestId });
+      const responseBody = isA2AHttpRequest
+        ? toSendMessageResponse(result)
+        : isA2ARequest ? { ...result, confidence: null } : result;
+      writeJson(response, 200, responseBody, headers, isA2AHttpRequest ? 'application/a2a+json; charset=utf-8' : undefined);
     } catch (error) {
       const appError = error instanceof AppError
         ? error

@@ -147,6 +147,14 @@ const server = createServer({
 
 전체 HTTP 계약은 [`docs/api/openapi.yaml`](docs/api/openapi.yaml)에서 확인할 수 있습니다.
 
+### A2A HTTP+JSON 표준 메시지 경로
+
+`POST /message:send`는 A2A HTTP+JSON의 동기 텍스트 메시지 경로입니다. 요청과 응답의 콘텐츠 타입은 `application/a2a+json`이며, `ROLE_USER` 텍스트 파트를 받아 `ROLE_AGENT` 텍스트 메시지 하나를 반환합니다. `metadata.mode`, `metadata.context`, `metadata.evidence`로 이 서비스의 게임 Q&A 맥락을 전달할 수 있습니다.
+
+이 구현은 빠른 동기 Q&A용 최소 범위입니다. 스트리밍(`/message:stream`), 작업 조회·취소, 푸시 알림, 파일 파트는 아직 제공하지 않습니다. 따라서 전체 A2A HTTP+JSON binding 구현으로 표현하지 않으며, Agent Card에도 `streaming: false`, `pushNotifications: false`를 명시합니다.
+
+`createDiscoveredHttpAgent()`는 Agent Card의 `supportedInterfaces`에 `HTTP+JSON`이 있으면 표준 메시지 형식으로 호출하고, 없으면 기존 `/a2a` 계약을 사용합니다.
+
 기업 업무생산성 프로젝트는 전문 에이전트 호출 시 `POST /a2a`를 사용합니다. `/api/ask`와 같은 Q&A 입력을 받고 `AgentResponse`에 `confidence`를 추가해 반환합니다.
 
 `/a2a`의 `evidence`는 최대 5개이며, 각 항목은 1~2,000자, 전체는 6,000자 이하여야 합니다.

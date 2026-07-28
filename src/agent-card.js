@@ -10,8 +10,13 @@ export function createAgentCard({ publicUrl = 'http://localhost:3000', requiresA
   const card = {
     name: 'game-qna-agent',
     description: '게임 기획·아트 가이드 및 게임 콘텐츠 Q&A 전문 에이전트',
-    url: `${baseUrl}/a2a`,
+    url: `${baseUrl}/message:send`,
     version: '0.1.0',
+    supportedInterfaces: [{
+      url: `${baseUrl}/message:send`,
+      protocolBinding: 'HTTP+JSON',
+      protocolVersion: '1.0',
+    }],
     capabilities: { streaming: false, pushNotifications: false },
     defaultInputModes: ['application/json'],
     defaultOutputModes: ['application/json'],

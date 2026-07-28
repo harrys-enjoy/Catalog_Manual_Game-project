@@ -106,6 +106,74 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /message:send:
+    post:
+      summary: A2A HTTP+JSON 동기 텍스트 메시지 전송
+      requestBody:
+        required: true
+        content:
+          application/a2a+json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: object
+                  required: [role, parts]
+                  properties:
+                    messageId:
+                      type: string
+                    contextId:
+                      type: string
+                    role:
+                      type: string
+                      enum: [ROLE_USER]
+                    parts:
+                      type: array
+                      minItems: 1
+                      items:
+                        type: object
+                        required: [text]
+                        properties:
+                          text:
+                            type: string
+                metadata:
+                  type: object
+                  properties:
+                    mode:
+                      type: string
+                      enum: [dev-guide, catalog, codex, lore]
+                    context:
+                      type: object
+                    evidence:
+                      type: array
+                      items:
+                        type: string
+      responses:
+        '200':
+          description: 완료된 A2A 에이전트 메시지
+          content:
+            application/a2a+json:
+              schema:
+                type: object
+                required: [message]
+                properties:
+                  message:
+                    type: object
+                    required: [messageId, role, parts]
+                    properties:
+                      messageId:
+                        type: string
+                      role:
+                        type: string
+                        enum: [ROLE_AGENT]
+                      parts:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            text:
+                              type: string
 components:
   schemas:
     AskRequest:

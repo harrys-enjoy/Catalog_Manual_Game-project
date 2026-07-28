@@ -152,6 +152,6 @@ test('well-known Agent Card를 공개한다', async () => {
   const body = await response.json();
   server.close();
   assert.equal(response.status, 200);
-  assert.equal(body.url, 'https://game.example/a2a');
+  assert.equal(body.url, 'https://game.example/message:send');
   assert.equal(body.skills.length, 4);
 });
