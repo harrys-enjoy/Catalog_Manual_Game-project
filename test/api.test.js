@@ -71,3 +71,20 @@ test('허용된 출처의 CORS preflight에 응답한다', async () => {
   assert.equal(response.status, 204);
   assert.equal(response.headers.get('access-control-allow-origin'), 'https://productivity.example');
 });
+
+test('API_KEY가 설정되면 Bearer 인증을 요구한다', async () => {
+  const server = createServer({ apiKey: 'secret-key', orchestrator: { ask: async () => ({}) } }).listen(0);
+  await once(server, 'listening');
+  const { port } = server.address();
+  const unauthorized = await fetch(`http://127.0.0.1:${port}/api/ask`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ mode: 'dev-guide', question: '질문' }),
+  });
+  const authorized = await fetch(`http://127.0.0.1:${port}/api/ask`, {
+    method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer secret-key' },
+    body: JSON.stringify({ mode: 'dev-guide', question: '질문' }),
+  });
+  server.close();
+  assert.equal(unauthorized.status, 401);
+  assert.equal(authorized.status, 200);
+});

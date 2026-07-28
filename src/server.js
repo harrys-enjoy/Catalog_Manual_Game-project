@@ -59,7 +59,7 @@ export function createDefaultOrchestrator({ modelAdapter = new MockModelAdapter(
   });
 }
 
-export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, corsOrigin = process.env.CORS_ORIGIN || '' } = {}) {
+export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, corsOrigin = process.env.CORS_ORIGIN || '', apiKey = process.env.API_KEY || '' } = {}) {
   orchestrator ??= createDefaultOrchestrator({ modelAdapter, remoteAgents });
   if (!orchestrator || typeof orchestrator.ask !== 'function') {
     throw new TypeError('orchestrator.ask가 필요합니다.');
@@ -77,6 +77,9 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, co
       if (request.method === 'GET' && request.url === '/health') {
         writeJson(response, 200, { status: 'ok', service: 'game-qna-api' }, headers);
         return;
+      }
+      if (apiKey && request.url === '/api/ask' && request.headers.authorization !== `Bearer ${apiKey}`) {
+        throw new AppError('UNAUTHORIZED', '유효한 Bearer 인증이 필요합니다.', 401);
       }
       if (request.method !== 'POST' || request.url !== '/api/ask') {
         throw new AppError('INTERNAL_ERROR', '요청 경로를 찾을 수 없습니다.', 404);
