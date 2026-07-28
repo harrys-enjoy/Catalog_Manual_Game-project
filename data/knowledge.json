@@ -1,0 +1,26 @@
+{
+  "catalog": [
+    {
+      "id": "ember-village",
+      "name": "잿불 마을",
+      "keywords": ["잿불 마을", "마을"],
+      "answer": "잿불 마을은 화산 지대 동쪽에 있는 거점입니다."
+    }
+  ],
+  "codex": [
+    {
+      "id": "lumens",
+      "name": "루멘",
+      "keywords": ["루멘", "약점"],
+      "answer": "루멘의 약점은 냉기 속성입니다."
+    }
+  ],
+  "lore": [
+    {
+      "id": "ash-covenant",
+      "name": "잿불 협약",
+      "keywords": ["잿불 협약"],
+      "answer": "잿불 협약은 화산 지대의 도시를 보호하기 위해 결성된 세력입니다."
+    }
+  ]
+}
