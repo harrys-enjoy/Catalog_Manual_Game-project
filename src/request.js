@@ -34,3 +34,15 @@ export function validateAskRequest(body) {
 export function createRequestId() {
   return `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
+
+export function validateAgentRequest(body) {
+  const request = validateAskRequest(body);
+  const requestId = typeof body.requestId === 'string' && body.requestId.trim()
+    ? body.requestId.trim()
+    : createRequestId();
+  const evidence = body.evidence ?? [];
+  if (!Array.isArray(evidence) || evidence.some((item) => typeof item !== 'string')) {
+    throw new AppError('INVALID_REQUEST', 'evidence는 문자열 배열이어야 합니다.');
+  }
+  return { ...request, requestId, evidence: evidence.slice(0, 5) };
+}

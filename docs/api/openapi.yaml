@@ -56,6 +56,44 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /a2a:
+    post:
+      summary: 전문 에이전트 호출
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/AskRequest'
+                - type: object
+                  properties:
+                    requestId:
+                      type: string
+                    evidence:
+                      type: array
+                      maxItems: 5
+                      items:
+                        type: string
+      responses:
+        '200':
+          description: AgentResponse
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/AskResponse'
+                  - type: object
+                    properties:
+                      confidence:
+                        nullable: true
+                        type: number
+        '401':
+          description: 인증 실패
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     AskRequest:

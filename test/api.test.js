@@ -84,7 +84,46 @@ test('API_KEY가 설정되면 Bearer 인증을 요구한다', async () => {
     method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer secret-key' },
     body: JSON.stringify({ mode: 'dev-guide', question: '질문' }),
   });
+  const a2aUnauthorized = await fetch(`http://127.0.0.1:${port}/a2a`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ mode: 'lore', question: '질문' }),
+  });
   server.close();
   assert.equal(unauthorized.status, 401);
   assert.equal(authorized.status, 200);
+  assert.equal(a2aUnauthorized.status, 401);
+});
+
+test('POST /a2a가 AgentResponse 형식으로 응답한다', async () => {
+  const server = createServer({
+    orchestrator: { ask: async (request) => ({
+      answer: `응답: ${request.question}`,
+      mode: request.mode,
+      agent: 'planning-guide',
+      sources: request.evidence,
+      usage: null,
+      requestId: request.requestId,
+    }) },
+  }).listen(0);
+  await once(server, 'listening');
+  const { port } = server.address();
+  const response = await fetch(`http://127.0.0.1:${port}/a2a`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      requestId: 'req_a2a', mode: 'dev-guide', question: '전투 시스템 기획',
+      context: { projectId: 'demo' }, evidence: ['근거 자료'],
+    }),
+  });
+  const body = await response.json();
+  server.close();
+  assert.equal(response.status, 200);
+  assert.deepEqual(body, {
+    answer: '응답: 전투 시스템 기획',
+    mode: 'dev-guide',
+    agent: 'planning-guide',
+    sources: ['근거 자료'],
+    usage: null,
+    requestId: 'req_a2a',
+    confidence: null,
+  });
 });

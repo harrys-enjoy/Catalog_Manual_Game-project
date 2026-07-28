@@ -138,3 +138,5 @@ const server = createServer({
 - 브라우저 호출은 `CORS_ORIGIN`에 지정된 단일 출처만 허용합니다. 기본값은 비활성입니다.
 
 전체 HTTP 계약은 [`docs/api/openapi.yaml`](docs/api/openapi.yaml)에서 확인할 수 있습니다.
+
+기업 업무생산성 프로젝트는 전문 에이전트 호출 시 `POST /a2a`를 사용합니다. `/api/ask`와 같은 Q&A 입력을 받고 `AgentResponse`에 `confidence`를 추가해 반환합니다.

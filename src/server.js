@@ -6,7 +6,7 @@ import { AppError } from './errors.js';
 import { lookupKnowledge } from './knowledge.js';
 import { createModelAdapterFromEnv } from './model-factory.js';
 import { createOrchestrator } from './orchestrator.js';
-import { createRequestId, parseJsonBody, validateAskRequest } from './request.js';
+import { createRequestId, parseJsonBody, validateAgentRequest, validateAskRequest } from './request.js';
 import { loadEnvFile } from './config.js';
 
 loadEnvFile();
@@ -72,7 +72,7 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, co
     const requestId = createRequestId();
     const headers = corsHeaders(request, corsOrigin);
     try {
-      if (request.method === 'OPTIONS' && request.url === '/api/ask' && Object.keys(headers).length > 0) {
+      if (request.method === 'OPTIONS' && ['/api/ask', '/a2a'].includes(request.url) && Object.keys(headers).length > 0) {
         response.writeHead(204, headers);
         response.end();
         return;
@@ -81,15 +81,18 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, co
         writeJson(response, 200, { status: 'ok', service: 'game-qna-api' }, headers);
         return;
       }
-      if (apiKey && request.url === '/api/ask' && request.headers.authorization !== `Bearer ${apiKey}`) {
+      if (apiKey && ['/api/ask', '/a2a'].includes(request.url) && request.headers.authorization !== `Bearer ${apiKey}`) {
         throw new AppError('UNAUTHORIZED', '유효한 Bearer 인증이 필요합니다.', 401);
       }
-      if (request.method !== 'POST' || request.url !== '/api/ask') {
+      const isAskRequest = request.method === 'POST' && request.url === '/api/ask';
+      const isA2ARequest = request.method === 'POST' && request.url === '/a2a';
+      if (!isAskRequest && !isA2ARequest) {
         throw new AppError('INTERNAL_ERROR', '요청 경로를 찾을 수 없습니다.', 404);
       }
-      const body = validateAskRequest(parseJsonBody(await readBody(request)));
-      const result = await orchestrator.ask({ ...body, requestId });
-      writeJson(response, 200, result, headers);
+      const parsed = parseJsonBody(await readBody(request));
+      const body = isA2ARequest ? validateAgentRequest(parsed) : validateAskRequest(parsed);
+      const result = await orchestrator.ask({ ...body, requestId: isA2ARequest ? body.requestId : requestId });
+      writeJson(response, 200, isA2ARequest ? { ...result, confidence: null } : result, headers);
     } catch (error) {
       const appError = error instanceof AppError
         ? error

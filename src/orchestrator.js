@@ -70,7 +70,7 @@ export function createOrchestrator({ agents, lookup, cacheTtlMs = 60_000, cacheM
       if (!agent) {
         throw new AppError('INTERNAL_ERROR', `에이전트를 사용할 수 없습니다: ${agentName}`, 500);
       }
-      const result = await agent.ask({ ...request, evidence: [] });
+      const result = await agent.ask({ ...request, evidence: request.evidence ?? [] });
       const response = {
         answer: result.answer,
         mode: request.mode,
