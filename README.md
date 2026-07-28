@@ -6,6 +6,16 @@
 
 요구 사항: Node.js 20 이상
 
+## 환경변수
+
+`.env.example`을 복사해 프로젝트 루트에 `.env` 파일을 만들고 서비스 키를 입력합니다. `.env`는 Git에 커밋되지 않습니다.
+
+```powershell
+Copy-Item .env.example .env
+```
+
+현재 `API_KEY`, `CORS_ORIGIN`, 원격 agent URL은 서버에 바로 적용됩니다. `MODEL_API_KEY`와 `MODEL_BASE_URL`은 Qwen 또는 Elice 모델 어댑터를 연결할 때 사용하며, 클라이언트에 노출하지 않습니다.
+
 ```bash
 npm test
 npm start

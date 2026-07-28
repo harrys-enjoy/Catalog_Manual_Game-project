@@ -7,6 +7,9 @@ import { lookupKnowledge } from './knowledge.js';
 import { MockModelAdapter } from './model.js';
 import { createOrchestrator } from './orchestrator.js';
 import { createRequestId, parseJsonBody, validateAskRequest } from './request.js';
+import { loadEnvFile } from './config.js';
+
+loadEnvFile();
 
 const MAX_BODY_BYTES = 1_048_576;
 
