@@ -49,7 +49,11 @@ export function createModelAdapterFromEnv({ env = process.env, fetchImpl = fetch
   const modelName = env.MODEL_NAME;
   const baseUrl = env.MODEL_BASE_URL;
   const apiKey = env.MODEL_API_KEY;
-  if (!modelName || !baseUrl || !apiKey) return new MockModelAdapter();
+  const configuredCount = [modelName, baseUrl, apiKey].filter(Boolean).length;
+  if (configuredCount === 0) return new MockModelAdapter();
+  if (configuredCount !== 3) {
+    throw new AppError('MODEL_CONFIG_INVALID', 'MODEL_NAME, MODEL_BASE_URL, MODEL_API_KEY를 모두 설정해야 합니다.', 500);
+  }
 
   return new LangChainModelAdapter({
     model: new OpenAICompatibleChatModel({

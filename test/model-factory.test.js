@@ -49,3 +49,12 @@ test('모델 timeout을 초과하면 MODEL_UNAVAILABLE을 반환한다', async (
   );
   assert.equal(receivedSignal instanceof AbortSignal, true);
 });
+
+test('모델 환경변수가 일부만 설정되면 명확한 설정 오류를 반환한다', () => {
+  assert.throws(
+    () => createModelAdapterFromEnv({
+      env: { MODEL_NAME: 'qwen-test', MODEL_BASE_URL: 'https://qwen.example/v1' },
+    }),
+    (error) => error.code === 'MODEL_CONFIG_INVALID' && error.statusCode === 500,
+  );
+});
