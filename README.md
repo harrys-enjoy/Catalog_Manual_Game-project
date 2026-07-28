@@ -39,6 +39,8 @@ Content-Type: application/json
 - `codex`: 캐릭터·몬스터·아이템 도감
 - `lore`: 세계관 Q&A
 
+`dev-guide`는 모델을 호출하기 전에 질문을 분류합니다. `기획`, `퀘스트`, `전투 시스템`, `레벨 디자인`, `밸런스`, `규칙`, `스킬 설계`가 포함되면 `planning-guide`로, 그 외에는 `art-guide`로 라우팅합니다.
+
 예시:
 
 ```bash

@@ -65,3 +65,23 @@ test('같은 질문은 TTL 동안 에이전트를 다시 호출하지 않는다'
   assert.equal(first.requestId, 'req_1');
   assert.equal(second.requestId, 'req_2');
 });
+
+test('dev-guide의 기획 질문은 planning-guide로 라우팅한다', async () => {
+  const called = [];
+  const makeAgent = (name) => ({ ask: async () => {
+    called.push(name);
+    return { answer: name, agent: name, sources: [], usage: null, confidence: null };
+  } });
+  const orchestrator = createOrchestrator({
+    lookup: () => null,
+    agents: new Map([
+      ['planning-guide', makeAgent('planning-guide')],
+      ['art-guide', makeAgent('art-guide')],
+    ]),
+  });
+  const result = await orchestrator.ask({
+    requestId: 'req_test', mode: 'dev-guide', question: '전투 시스템 기획안을 검토해줘', context: {},
+  });
+  assert.equal(result.agent, 'planning-guide');
+  assert.deepEqual(called, ['planning-guide']);
+});

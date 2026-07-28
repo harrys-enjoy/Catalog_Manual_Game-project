@@ -1,9 +1,12 @@
 import { AppError } from './errors.js';
 
-const agentByMode = {
-  'dev-guide': 'art-guide',
-  lore: 'lore',
-};
+const planningKeywords = ['기획', '퀘스트', '전투 시스템', '레벨 디자인', '밸런스', '규칙', '스킬 설계'];
+
+function selectDevGuideAgent(question) {
+  return planningKeywords.some((keyword) => question.includes(keyword))
+    ? 'planning-guide'
+    : 'art-guide';
+}
 
 function cacheKey(request) {
   const context = request.context ?? {};
@@ -60,7 +63,9 @@ export function createOrchestrator({ agents, lookup, cacheTtlMs = 60_000, cacheM
         throw new AppError('KNOWLEDGE_NOT_FOUND', '요청과 일치하는 게임 자료를 찾지 못했습니다.', 404);
       }
 
-      const agentName = agentByMode[request.mode];
+      const agentName = request.mode === 'dev-guide'
+        ? selectDevGuideAgent(request.question)
+        : 'lore';
       const agent = agents.get(agentName);
       if (!agent) {
         throw new AppError('INTERNAL_ERROR', `에이전트를 사용할 수 없습니다: ${agentName}`, 500);
