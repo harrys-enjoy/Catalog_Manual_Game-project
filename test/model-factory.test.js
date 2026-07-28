@@ -58,3 +58,23 @@ test('모델 환경변수가 일부만 설정되면 명확한 설정 오류를 �
     (error) => error.code === 'MODEL_CONFIG_INVALID' && error.statusCode === 500,
   );
 });
+
+test('QWEN_BASE_URL도 OpenAI 호환 모델 endpoint로 사용한다', async () => {
+  let calledUrl;
+  const adapter = createModelAdapterFromEnv({
+    env: {
+      MODEL_NAME: 'Qwen/Qwen3-Next-80B-A3B-Instruct',
+      QWEN_BASE_URL: 'https://integrate.api.nvidia.com/v1',
+      MODEL_API_KEY: 'test-key',
+    },
+    fetchImpl: async (url) => {
+      calledUrl = url;
+      return new Response(JSON.stringify({
+        choices: [{ message: { content: '응답' } }],
+      }), { status: 200 });
+    },
+  });
+
+  await adapter.generate({ system: '규칙', question: '질문', evidence: [] });
+  assert.equal(calledUrl, 'https://integrate.api.nvidia.com/v1/chat/completions');
+});
