@@ -85,6 +85,16 @@ curl -X POST http://127.0.0.1:3000/api/ask \
 
 동일한 프로젝트·사용자·mode·질문은 오케스트레이터의 인메모리 캐시에서 60초 동안 재사용됩니다. 캐시는 최대 100개 응답만 보관하며, 서버 재시작 시 초기화됩니다.
 
+## 콘텐츠 출처·라이선스 확인
+
+게임 카탈로그·도감·세계관 데이터의 공개 출처와 라이선스는 다음 엔드포인트에서 확인할 수 있습니다. 이 경로는 콘텐츠 출처 확인용 공개 정보만 반환하며, API 키나 사용자 질문은 포함하지 않습니다.
+
+```http
+GET /sources
+```
+
+응답의 각 항목에는 `title`, `sourceUrl`, `license`, `licenseUrl`, `usage`가 포함됩니다. 현재 등록되는 외부 게임 소스는 CC0만 허용됩니다.
+
 ## LangChain 연결
 
 기본 실행은 외부 패키지가 없는 Mock 모델을 사용합니다. LangChain을 사용할 때는 LangChain 모델의 `invoke(messages)`를 `LangChainModelAdapter`에 주입합니다.
@@ -142,7 +152,7 @@ const server = createServer({
 - 이 프로젝트는 MCP Host를 구현하지 않고 REST API와 A2A 전문 에이전트로 연결됩니다.
 - 외부 서비스는 `POST /api/ask`를 호출하고 `context.workContext`에 호출 맥락을 전달합니다.
 - API 키는 클라이언트나 저장소에 넣지 않습니다.
-- `API_KEY`를 설정하면 `/api/ask`에 `Authorization: Bearer <API_KEY>`가 필요합니다. `/health`는 공개입니다.
+- `API_KEY`를 설정하면 `/api/ask`, `/a2a`, `/message:send`에 `Authorization: Bearer <API_KEY>`가 필요합니다. `/health`, `/metrics`, `/sources`, Agent Card는 공개입니다.
 - 모든 응답에는 추적용 `requestId`가 포함됩니다.
 - 모델 제공자가 측정하지 않은 토큰 수는 임의로 표시하지 않습니다.
 - 브라우저 호출은 `CORS_ORIGIN`에 지정된 단일 출처만 허용합니다. 기본값은 비활성입니다.
