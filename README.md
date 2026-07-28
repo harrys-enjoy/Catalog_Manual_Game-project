@@ -29,6 +29,16 @@ npm start
 
 기본 포트는 `3000`이며 `PORT` 환경변수로 변경할 수 있습니다.
 
+## Docker 실행
+
+1. `.env.example`을 `.env`로 복사하고 실제 `API_KEY`, `MODEL_API_KEY`를 입력합니다. `.env`는 저장소에 커밋하지 않습니다.
+2. `docker compose up --build -d`로 실행합니다.
+3. `Invoke-RestMethod http://127.0.0.1:3000/health`로 상태를 확인합니다.
+4. 출처 확인은 `Invoke-RestMethod http://127.0.0.1:3000/sources`를 사용합니다.
+5. 중지는 `docker compose down`을 사용합니다.
+
+호스트 포트는 `.env`의 `PORT`로 변경할 수 있으며, 기본값은 `3000`입니다. 실제 모델 키와 API 키는 Dockerfile, Compose 파일, 브라우저 코드에 넣지 않습니다.
+
 ## API
 
 연동 상태 확인:
