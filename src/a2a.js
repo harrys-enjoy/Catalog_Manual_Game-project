@@ -17,6 +17,24 @@ function normalizeAgentResponse(payload, agentName) {
   };
 }
 
+function readTextParts(parts) {
+  if (!Array.isArray(parts)) return '';
+  return parts
+    .filter((part) => typeof part?.text === 'string')
+    .map((part) => part.text)
+    .join('\n');
+}
+
+function readA2AAnswer(payload) {
+  const artifactAnswer = Array.isArray(payload?.task?.artifacts)
+    ? payload.task.artifacts.map((artifact) => readTextParts(artifact.parts)).find(Boolean)
+    : '';
+  return readTextParts(payload?.message?.parts)
+    || readTextParts(payload?.task?.status?.message?.parts)
+    || artifactAnswer
+    || '';
+}
+
 export function createHttpAgent({ agentName, endpoint, headers = {}, timeoutMs = 5000, fetchImpl = fetch }) {
   if (!agentName || !endpoint) throw new TypeError('agentName과 endpoint가 필요합니다.');
   return {
@@ -73,10 +91,7 @@ export function createHttpJsonAgent({ agentName, endpoint, headers = {}, timeout
       }
       try {
         const payload = await response.json();
-        const answer = payload?.message?.parts
-          ?.filter((part) => typeof part?.text === 'string')
-          .map((part) => part.text)
-          .join('\n');
+        const answer = readA2AAnswer(payload);
         if (!answer) throw new AppError('MODEL_UNAVAILABLE', '원격 A2A 응답 형식이 올바르지 않습니다.', 503);
         return {
           answer,
@@ -84,7 +99,7 @@ export function createHttpJsonAgent({ agentName, endpoint, headers = {}, timeout
           agent: agentName,
           sources: [],
           usage: null,
-          requestId: payload.message.messageId || input.requestId,
+          requestId: payload.message?.messageId || input.requestId,
           confidence: null,
         };
       } catch (error) {

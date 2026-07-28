@@ -26,6 +26,30 @@ test('HTTP+JSON A2A 에이전트는 표준 메시지 형식으로 요청한다',
     answer: '세계관 응답', mode: 'lore', agent: 'lore-agent', sources: [], usage: null, requestId: 'req_1', confidence: null,
   });
 });
+
+test('HTTP+JSON A2A 에이전트는 완료된 task의 상태 메시지를 읽는다', async () => {
+  const agent = createHttpJsonAgent({
+    agentName: 'planning-agent',
+    endpoint: 'https://agent.example/message:send',
+    fetchImpl: async () => new Response(JSON.stringify({
+      task: {
+        id: 'task-1',
+        status: {
+          state: 'TASK_STATE_COMPLETED',
+          message: { role: 'ROLE_AGENT', parts: [{ text: '기획 검토 결과' }] },
+        },
+      },
+    }), { status: 200 }),
+  });
+
+  const response = await agent.ask({
+    requestId: 'req_2', mode: 'dev-guide', question: '전투 기획', context: {}, evidence: [],
+  });
+
+  assert.equal(response.answer, '기획 검토 결과');
+  assert.equal(response.requestId, 'req_2');
+  assert.equal(response.agent, 'planning-agent');
+});
 import { createDefaultOrchestrator } from '../src/server.js';
 
 test('A2A 요청을 공통 AgentRequest 형식으로 만든다', () => {
