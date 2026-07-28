@@ -87,6 +87,14 @@ const remoteLoreAgent = createHttpAgent({
 });
 ```
 
+서버 조립 시 원격 에이전트를 mode에 연결할 수 있습니다. URL 문자열을 넘기면 내부에서 HTTP A2A 어댑터를 만듭니다.
+
+```js
+const server = createServer({
+  remoteAgents: { lore: process.env.LORE_AGENT_URL },
+});
+```
+
 오케스트레이터의 `agents` 맵에서 같은 이름의 에이전트를 교체하면 됩니다. 요청은 `requestId`, `mode`, `question`, `context`, `evidence`를 포함하고, 응답은 `answer`, `agent`, `sources`, `usage`, `confidence`로 정규화됩니다. 외부 A2A 서버·레지스트리·재시도 큐는 현재 API가 소유하지 않습니다.
 
 ## 외부 연동 원칙

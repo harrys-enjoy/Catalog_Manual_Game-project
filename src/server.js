@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { fileURLToPath } from 'node:url';
+import { createHttpAgent } from './a2a.js';
 import { createAgentRegistry } from './agents.js';
 import { AppError } from './errors.js';
 import { lookupKnowledge } from './knowledge.js';
@@ -32,14 +33,22 @@ function readBody(request) {
   });
 }
 
-export function createDefaultOrchestrator({ modelAdapter = new MockModelAdapter() } = {}) {
+export function createDefaultOrchestrator({ modelAdapter = new MockModelAdapter(), remoteAgents = {} } = {}) {
+  const agents = createAgentRegistry({ modelAdapter });
+  for (const [agentName, target] of Object.entries(remoteAgents)) {
+    const agent = typeof target === 'string'
+      ? createHttpAgent({ agentName, endpoint: target })
+      : target;
+    if (agent && typeof agent.ask === 'function') agents.set(agentName, agent);
+  }
   return createOrchestrator({
     lookup: lookupKnowledge,
-    agents: createAgentRegistry({ modelAdapter }),
+    agents,
   });
 }
 
-export function createServer({ orchestrator = createDefaultOrchestrator() } = {}) {
+export function createServer({ orchestrator, modelAdapter, remoteAgents = {} } = {}) {
+  orchestrator ??= createDefaultOrchestrator({ modelAdapter, remoteAgents });
   if (!orchestrator || typeof orchestrator.ask !== 'function') {
     throw new TypeError('orchestrator.ask가 필요합니다.');
   }

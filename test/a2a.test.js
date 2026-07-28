@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHttpAgent, createAgentRequest } from '../src/a2a.js';
+import { createDefaultOrchestrator } from '../src/server.js';
 
 test('A2A 요청을 공통 AgentRequest 형식으로 만든다', () => {
   assert.deepEqual(
@@ -61,4 +62,21 @@ test('원격 에이전트 오류는 MODEL_UNAVAILABLE로 변환한다', async ()
     () => agent.ask({ requestId: 'req_test', mode: 'lore', question: '질문', context: {}, evidence: [] }),
     (error) => error.code === 'MODEL_UNAVAILABLE' && error.statusCode === 503,
   );
+});
+
+test('기본 오케스트레이터는 주입된 원격 lore agent를 사용한다', async () => {
+  const orchestrator = createDefaultOrchestrator({
+    remoteAgents: {
+      lore: {
+        async ask() {
+          return { answer: '원격 lore', agent: 'remote-lore', sources: [], usage: null };
+        },
+      },
+    },
+  });
+  const result = await orchestrator.ask({
+    requestId: 'req_test', mode: 'lore', question: '세력 관계', context: {},
+  });
+  assert.equal(result.agent, 'remote-lore');
+  assert.equal(result.answer, '원격 lore');
 });
