@@ -49,6 +49,8 @@ curl -X POST http://127.0.0.1:3000/api/ask \
 
 구조화 데이터로 답할 수 있는 `catalog`·`codex` 질문은 모델을 호출하지 않습니다. 자료가 없는 경우 `KNOWLEDGE_NOT_FOUND`를 반환합니다.
 
+동일한 프로젝트·사용자·mode·질문은 오케스트레이터의 인메모리 캐시에서 60초 동안 재사용됩니다. 캐시는 최대 100개 응답만 보관하며, 서버 재시작 시 초기화됩니다.
+
 ## LangChain 연결
 
 기본 실행은 외부 패키지가 없는 Mock 모델을 사용합니다. LangChain을 사용할 때는 LangChain 모델의 `invoke(messages)`를 `LangChainModelAdapter`에 주입합니다.

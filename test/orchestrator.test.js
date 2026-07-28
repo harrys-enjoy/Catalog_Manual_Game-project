@@ -48,3 +48,20 @@ test('lore 질문은 lore agent만 호출한다', async () => {
   await orchestrator.ask({ requestId: 'req_test', mode: 'lore', question: '세력 관계', context: {} });
   assert.deepEqual(called, ['lore']);
 });
+
+test('같은 질문은 TTL 동안 에이전트를 다시 호출하지 않는다', async () => {
+  let calls = 0;
+  const orchestrator = createOrchestrator({
+    lookup: () => null,
+    agents: new Map([['lore', { ask: async () => {
+      calls += 1;
+      return { answer: '캐시 가능한 답변', agent: 'lore', sources: [], usage: null, confidence: null };
+    } }]]),
+    cacheTtlMs: 60_000,
+  });
+  const first = await orchestrator.ask({ requestId: 'req_1', mode: 'lore', question: '세력 관계', context: { projectId: 'demo' } });
+  const second = await orchestrator.ask({ requestId: 'req_2', mode: 'lore', question: '세력 관계', context: { projectId: 'demo' } });
+  assert.equal(calls, 1);
+  assert.equal(first.requestId, 'req_1');
+  assert.equal(second.requestId, 'req_2');
+});
