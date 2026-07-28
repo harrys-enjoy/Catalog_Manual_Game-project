@@ -17,7 +17,7 @@ function normalizeAgentResponse(payload, agentName) {
   };
 }
 
-export function createHttpAgent({ agentName, endpoint, timeoutMs = 5000, fetchImpl = fetch }) {
+export function createHttpAgent({ agentName, endpoint, headers = {}, timeoutMs = 5000, fetchImpl = fetch }) {
   if (!agentName || !endpoint) throw new TypeError('agentName과 endpoint가 필요합니다.');
   return {
     async ask(input) {
@@ -25,7 +25,7 @@ export function createHttpAgent({ agentName, endpoint, timeoutMs = 5000, fetchIm
       try {
         response = await fetchImpl(endpoint, {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': 'application/json', ...headers },
           signal: AbortSignal.timeout(timeoutMs),
           body: JSON.stringify(createAgentRequest(input)),
         });
@@ -71,12 +71,12 @@ export async function discoverAgentCard({ cardUrl, timeoutMs = 5000, fetchImpl =
   return card;
 }
 
-export function createDiscoveredHttpAgent({ agentName, cardUrl, timeoutMs = 5000, fetchImpl = fetch }) {
+export function createDiscoveredHttpAgent({ agentName, cardUrl, headers = {}, timeoutMs = 5000, fetchImpl = fetch }) {
   let agentPromise;
   return {
     async ask(input) {
       agentPromise ??= discoverAgentCard({ cardUrl, timeoutMs, fetchImpl })
-        .then((card) => createHttpAgent({ agentName, endpoint: card.url, timeoutMs, fetchImpl }));
+        .then((card) => createHttpAgent({ agentName, endpoint: card.url, headers, timeoutMs, fetchImpl }));
       return (await agentPromise).ask(input);
     },
   };

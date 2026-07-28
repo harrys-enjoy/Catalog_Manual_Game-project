@@ -144,3 +144,5 @@ const server = createServer({
 에이전트 발견 정보는 `GET /.well-known/agent-card.json`에서 제공하며, 공개 URL은 `AGENT_PUBLIC_URL`로 설정합니다. 카드에는 API 키나 모델 키를 포함하지 않습니다.
 
 클라이언트는 `createDiscoveredHttpAgent()`를 사용해 Agent Card를 한 번 조회한 뒤 카드의 `url`로 A2A 요청을 보낼 수 있습니다.
+
+Bearer 인증이 필요하면 agent factory의 `headers`에 `authorization: 'Bearer <API_KEY>'`를 전달합니다.

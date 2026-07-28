@@ -52,6 +52,22 @@ test('HTTP 에이전트는 응답을 표준 AgentResponse로 정규화한다', a
   });
 });
 
+test('HTTP 에이전트는 설정된 인증 헤더를 전달한다', async () => {
+  let headers;
+  const agent = createHttpAgent({
+    agentName: 'remote-lore',
+    endpoint: 'https://agent.example/a2a',
+    headers: { authorization: 'Bearer integration-key' },
+    fetchImpl: async (_endpoint, options) => {
+      headers = options.headers;
+      return new Response(JSON.stringify({ answer: '답변' }), { status: 200 });
+    },
+  });
+  await agent.ask({ requestId: 'req_test', mode: 'lore', question: '질문', context: {}, evidence: [] });
+  assert.equal(headers.authorization, 'Bearer integration-key');
+  assert.equal(headers['content-type'], 'application/json');
+});
+
 test('원격 에이전트 오류는 MODEL_UNAVAILABLE로 변환한다', async () => {
   const agent = createHttpAgent({
     agentName: 'remote-lore',
