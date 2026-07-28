@@ -4,6 +4,49 @@ import { createAgentRegistry } from '../src/agents.js';
 import { MockModelAdapter } from '../src/model.js';
 import { createOrchestrator } from '../src/orchestrator.js';
 
+test('isolates lore cache entries by A2A contextId', async () => {
+  let calls = 0;
+  const orchestrator = createOrchestrator({
+    lookup: () => null,
+    agents: new Map([['lore', { ask: async ({ context }) => {
+      calls += 1;
+      return {
+        answer: `answer for ${context.contextId}`,
+        agent: 'lore',
+        sources: [],
+        usage: null,
+        confidence: null,
+      };
+    } }]]),
+    cacheTtlMs: 60_000,
+  });
+  const baseRequest = {
+    mode: 'lore',
+    question: 'same lore question',
+    context: {
+      projectId: 'demo',
+      userId: 'user-1',
+      workContext: 'same work context',
+    },
+    evidence: ['same evidence'],
+  };
+
+  const first = await orchestrator.ask({
+    ...baseRequest,
+    requestId: 'req_ctx_a',
+    context: { ...baseRequest.context, contextId: 'ctx-a' },
+  });
+  const second = await orchestrator.ask({
+    ...baseRequest,
+    requestId: 'req_ctx_b',
+    context: { ...baseRequest.context, contextId: 'ctx-b' },
+  });
+
+  assert.equal(calls, 2);
+  assert.equal(first.answer, 'answer for ctx-a');
+  assert.equal(second.answer, 'answer for ctx-b');
+});
+
 test('art-guide agent는 제한된 컨텍스트로 응답한다', async () => {
   const registry = createAgentRegistry({ modelAdapter: new MockModelAdapter() });
   const result = await registry.get('art-guide').ask({
