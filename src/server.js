@@ -112,7 +112,12 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, co
         return;
       }
       if (request.method === 'GET' && request.url === '/.well-known/agent-card.json') {
-        writeJson(response, 200, createAgentCard({ publicUrl, requiresAuth: Boolean(apiKey) }), headers);
+        const card = createAgentCard({ publicUrl, requiresAuth: Boolean(apiKey) });
+        writeJson(response, 200, card, {
+          ...headers,
+          'cache-control': 'public, max-age=300',
+          etag: `"${card.name}-${card.version}"`,
+        });
         return;
       }
       if (apiKey && ['/api/ask', '/a2a', '/message:send'].includes(request.url) && request.headers.authorization !== `Bearer ${apiKey}`) {
