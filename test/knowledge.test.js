@@ -2,6 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { lookupKnowledge } from '../src/knowledge.js';
 
+test('카탈로그의 키워드 하나만 포함해도 항목을 찾는다', () => {
+  const result = lookupKnowledge('catalog', '마을 정보를 보여줘');
+  assert.deepEqual(result.sources, ['catalog:ember-village']);
+});
+
 test('codex 질문은 모델 없이 도감 데이터를 반환한다', () => {
   const result = lookupKnowledge('codex', '루멘의 약점은 무엇인가?');
   assert.equal(result.answer, '루멘의 약점은 냉기 속성입니다.');

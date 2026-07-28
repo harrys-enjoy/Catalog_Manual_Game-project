@@ -6,6 +6,6 @@ const knowledge = JSON.parse(readFileSync(dataPath, 'utf8'));
 
 export function lookupKnowledge(mode, question) {
   const entries = knowledge[mode] ?? [];
-  const item = entries.find((entry) => entry.keywords.every((keyword) => question.includes(keyword)));
+  const item = entries.find((entry) => entry.keywords.some((keyword) => question.includes(keyword)));
   return item ? { answer: item.answer, sources: [`${mode}:${item.id}`] } : null;
 }
