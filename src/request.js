@@ -1,6 +1,9 @@
 import { AppError } from './errors.js';
 
 export const ALLOWED_MODES = new Set(['dev-guide', 'catalog', 'codex', 'lore']);
+const MAX_EVIDENCE_ITEMS = 5;
+const MAX_EVIDENCE_ITEM_CHARS = 2000;
+const MAX_EVIDENCE_TOTAL_CHARS = 6000;
 
 export function parseJsonBody(rawBody) {
   try {
@@ -44,5 +47,15 @@ export function validateAgentRequest(body) {
   if (!Array.isArray(evidence) || evidence.some((item) => typeof item !== 'string')) {
     throw new AppError('INVALID_REQUEST', 'evidence는 문자열 배열이어야 합니다.');
   }
-  return { ...request, requestId, evidence: evidence.slice(0, 5) };
+  if (evidence.length > MAX_EVIDENCE_ITEMS) {
+    throw new AppError('INVALID_REQUEST', `evidence는 최대 ${MAX_EVIDENCE_ITEMS}개까지 허용됩니다.`);
+  }
+  const normalizedEvidence = evidence.map((item) => item.trim());
+  if (normalizedEvidence.some((item) => item.length < 1 || item.length > MAX_EVIDENCE_ITEM_CHARS)) {
+    throw new AppError('INVALID_REQUEST', `각 evidence는 1~${MAX_EVIDENCE_ITEM_CHARS}자여야 합니다.`);
+  }
+  if (normalizedEvidence.join('').length > MAX_EVIDENCE_TOTAL_CHARS) {
+    throw new AppError('INVALID_REQUEST', `evidence 전체 길이는 ${MAX_EVIDENCE_TOTAL_CHARS}자 이하여야 합니다.`);
+  }
+  return { ...request, requestId, evidence: normalizedEvidence };
 }

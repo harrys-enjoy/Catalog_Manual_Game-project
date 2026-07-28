@@ -149,6 +149,8 @@ const server = createServer({
 
 기업 업무생산성 프로젝트는 전문 에이전트 호출 시 `POST /a2a`를 사용합니다. `/api/ask`와 같은 Q&A 입력을 받고 `AgentResponse`에 `confidence`를 추가해 반환합니다.
 
+`/a2a`의 `evidence`는 최대 5개이며, 각 항목은 1~2,000자, 전체는 6,000자 이하여야 합니다.
+
 에이전트 발견 정보는 `GET /.well-known/agent-card.json`에서 제공하며, 공개 URL은 `AGENT_PUBLIC_URL`로 설정합니다. 카드에는 API 키나 모델 키를 포함하지 않습니다.
 
 클라이언트는 `createDiscoveredHttpAgent()`를 사용해 Agent Card를 한 번 조회한 뒤 카드의 `url`로 A2A 요청을 보낼 수 있습니다.

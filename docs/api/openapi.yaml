@@ -85,6 +85,8 @@ paths:
                       maxItems: 5
                       items:
                         type: string
+                        minLength: 1
+                        maxLength: 2000
       responses:
         '200':
           description: AgentResponse
