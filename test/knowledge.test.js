@@ -7,6 +7,14 @@ test('카탈로그의 키워드 하나만 포함해도 항목을 찾는다', () 
   assert.deepEqual(result.sources, ['catalog:ember-village']);
 });
 
+test('CC0 오픈 게임 소스 기반 도감 항목을 조회한다', () => {
+  const result = lookupKnowledge('codex', '무료 게임 오브젝트에 어떤 것이 있나요?');
+  assert.deepEqual(result.sources, [
+    'codex:oga-free-game-objects',
+    'https://opengameart.org/content/free-game-objects',
+  ]);
+});
+
 test('codex 질문은 모델 없이 도감 데이터를 반환한다', () => {
   const result = lookupKnowledge('codex', '루멘의 약점은 무엇인가?');
   assert.equal(result.answer, '루멘의 약점은 냉기 속성입니다.');

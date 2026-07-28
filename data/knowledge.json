@@ -1,6 +1,13 @@
 {
   "catalog": [
     {
+      "id": "oga-rpg-tileset",
+      "name": "RPG Tileset",
+      "keywords": ["RPG Tileset", "RPG 타일셋", "타일셋"],
+      "answer": "OpenGameArt의 RPG Tileset은 16x16 RPG용 타일셋으로, 기사·궁수·마법사·동굴·건물·물·몬스터 등의 태그가 공개되어 있습니다.",
+      "sourceRef": "oga-rpg-tileset"
+    },
+    {
       "id": "ember-village",
       "name": "잿불 마을",
       "keywords": ["잿불 마을", "마을"],
@@ -9,6 +16,13 @@
   ],
   "codex": [
     {
+      "id": "oga-free-game-objects",
+      "name": "Free Game Objects",
+      "keywords": ["무료 게임 오브젝트", "Free Game Objects", "게임 오브젝트"],
+      "answer": "OpenGameArt의 Free Game Objects는 나무, 상자, 플랫폼, 문 등을 포함한 100개 이상의 2D 게임 오브젝트 모음입니다.",
+      "sourceRef": "oga-free-game-objects"
+    },
+    {
       "id": "lumens",
       "name": "루멘",
       "keywords": ["루멘", "약점"],
@@ -16,6 +30,13 @@
     }
   ],
   "lore": [
+    {
+      "id": "oga-starfields",
+      "name": "Starfields",
+      "keywords": ["Starfields", "스타필드 배경", "우주 배경"],
+      "answer": "OpenGameArt의 Starfields는 우주와 별을 주제로 한 배경 자료입니다. 이 항목은 세계관 서사 대신 시각적 세계 설정 참고용으로 제공합니다.",
+      "sourceRef": "oga-starfields"
+    },
     {
       "id": "ash-covenant",
       "name": "잿불 협약",
