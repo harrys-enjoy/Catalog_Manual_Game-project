@@ -21,6 +21,17 @@ export function validateKnowledgeSources(data, sources) {
 validateKnowledgeSources(knowledge, sourceData);
 const sourceById = new Map(sourceData.map((source) => [source.id, source]));
 
+export function listSources() {
+  return sourceData.map(({ id, title, sourceUrl, license, licenseUrl, usage }) => ({
+    id,
+    title,
+    sourceUrl,
+    license,
+    licenseUrl,
+    usage,
+  }));
+}
+
 export function lookupKnowledge(mode, question) {
   const entries = knowledge[mode] ?? [];
   const item = entries.find((entry) => entry.keywords.some((keyword) => question.includes(keyword)));

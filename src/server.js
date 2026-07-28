@@ -5,7 +5,7 @@ import { toAgentRequest, toSendMessageResponse } from './a2a-http.js';
 import { createAgentCard } from './agent-card.js';
 import { createAgentRegistry } from './agents.js';
 import { AppError } from './errors.js';
-import { lookupKnowledge } from './knowledge.js';
+import { listSources, lookupKnowledge } from './knowledge.js';
 import { createModelAdapterFromEnv } from './model-factory.js';
 import { createOrchestrator } from './orchestrator.js';
 import { createRequestId, parseJsonBody, validateAgentRequest, validateAskRequest } from './request.js';
@@ -109,6 +109,10 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, co
           directKnowledgeResponses: 0,
           agentCalls: 0,
         }, headers);
+        return;
+      }
+      if (request.method === 'GET' && request.url === '/sources') {
+        writeJson(response, 200, { sources: listSources() }, headers);
         return;
       }
       if (request.method === 'GET' && request.url === '/.well-known/agent-card.json') {

@@ -26,6 +26,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MetricsResponse'
+  /sources:
+    get:
+      summary: CC0 콘텐츠 출처 목록 조회
+      responses:
+        '200':
+          description: 공개 가능한 콘텐츠 출처와 라이선스 정보
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourcesResponse'
   /api/ask:
     post:
       summary: 게임 Q&A 요청
@@ -257,3 +267,30 @@ components:
           type: integer
         agentCalls:
           type: integer
+    Source:
+      type: object
+      required: [id, title, sourceUrl, license, licenseUrl, usage]
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        sourceUrl:
+          type: string
+          format: uri
+        license:
+          type: string
+          enum: [CC0]
+        licenseUrl:
+          type: string
+          format: uri
+        usage:
+          type: string
+    SourcesResponse:
+      type: object
+      required: [sources]
+      properties:
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/Source'
