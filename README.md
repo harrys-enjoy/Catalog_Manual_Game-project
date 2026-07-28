@@ -18,6 +18,8 @@ Copy-Item .env.example .env
 
 Qwen endpoint를 Elice로 교체할 때는 `.env`의 `MODEL_NAME`, `MODEL_BASE_URL`, `MODEL_API_KEY`만 변경하면 됩니다. Elice endpoint가 OpenAI 호환 형식이 아니면 `src/model-factory.js`에 Elice 전용 provider 분기를 추가합니다.
 
+모델 호출 timeout은 기본 30초이며 `MODEL_TIMEOUT_MS`로 조정할 수 있습니다.
+
 ```bash
 npm test
 npm start

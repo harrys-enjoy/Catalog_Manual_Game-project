@@ -3,10 +3,11 @@ import { LangChainModelAdapter } from './langchain-adapter.js';
 import { MockModelAdapter } from './model.js';
 
 class OpenAICompatibleChatModel {
-  constructor({ modelName, baseUrl, apiKey, fetchImpl = fetch }) {
+  constructor({ modelName, baseUrl, apiKey, timeoutMs = 30_000, fetchImpl = fetch }) {
     this.modelName = modelName;
     this.baseUrl = baseUrl.replace(/\/$/, '');
     this.apiKey = apiKey;
+    this.timeoutMs = timeoutMs;
     this.fetchImpl = fetchImpl;
   }
 
@@ -19,6 +20,7 @@ class OpenAICompatibleChatModel {
           'content-type': 'application/json',
           authorization: `Bearer ${this.apiKey}`,
         },
+        signal: AbortSignal.timeout(this.timeoutMs),
         body: JSON.stringify({ model: this.modelName, messages, temperature: 0.2, max_tokens: 800 }),
       });
     } catch {
@@ -50,6 +52,12 @@ export function createModelAdapterFromEnv({ env = process.env, fetchImpl = fetch
   if (!modelName || !baseUrl || !apiKey) return new MockModelAdapter();
 
   return new LangChainModelAdapter({
-    model: new OpenAICompatibleChatModel({ modelName, baseUrl, apiKey, fetchImpl }),
+    model: new OpenAICompatibleChatModel({
+      modelName,
+      baseUrl,
+      apiKey,
+      timeoutMs: Number(env.MODEL_TIMEOUT_MS || 30_000),
+      fetchImpl,
+    }),
   });
 }

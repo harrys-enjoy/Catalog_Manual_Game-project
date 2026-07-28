@@ -30,3 +30,22 @@ test('모델 환경변수가 없으면 Mock 어댑터를 사용한다', () => {
   const adapter = createModelAdapterFromEnv({ env: {} });
   assert.equal(adapter.constructor.name, 'MockModelAdapter');
 });
+
+test('모델 timeout을 초과하면 MODEL_UNAVAILABLE을 반환한다', async () => {
+  let receivedSignal;
+  const adapter = createModelAdapterFromEnv({
+    env: {
+      MODEL_PROVIDER: 'qwen', MODEL_NAME: 'qwen-test', MODEL_BASE_URL: 'https://qwen.example/v1',
+      MODEL_API_KEY: 'test-key', MODEL_TIMEOUT_MS: '1',
+    },
+    fetchImpl: async (_url, options) => new Promise((resolve, reject) => {
+      receivedSignal = options.signal;
+      options.signal.addEventListener('abort', () => reject(new Error('timeout')));
+    }),
+  });
+  await assert.rejects(
+    () => adapter.generate({ system: '규칙', question: '질문', evidence: [] }),
+    (error) => error.code === 'MODEL_UNAVAILABLE' && error.statusCode === 503,
+  );
+  assert.equal(receivedSignal instanceof AbortSignal, true);
+});
