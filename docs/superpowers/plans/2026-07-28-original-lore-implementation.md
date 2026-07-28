@@ -16,6 +16,10 @@
 - 모든 새 동작은 먼저 실패하는 테스트로 검증한다.
 - 기존 `catalog`, `codex`, `lore` API 계약과 `npm test`를 유지한다.
 
+## Execution Order
+
+`glass-star-origin`은 Task 1의 테스트 대상이므로, 실행 시에는 **Task 2를 먼저 완료**해 세 세계관 데이터 시드를 추가한다. 그다음 Task 1을 실행해 `original:lore` 표식과 CC0 URL 반환을 검증한다. 마지막으로 전체 테스트를 실행한다.
+
 ---
 
 ### Task 1: 독자 세계관 출처 표식 반환
