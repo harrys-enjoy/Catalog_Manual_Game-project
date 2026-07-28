@@ -163,7 +163,7 @@ const server = createServer({
 - 외부 서비스는 `POST /api/ask`를 호출하고 `context.workContext`에 호출 맥락을 전달합니다.
 - API 키는 클라이언트나 저장소에 넣지 않습니다.
 - `API_KEY`를 설정하면 `/api/ask`, `/a2a`, `/message:send`에 `Authorization: Bearer <API_KEY>`가 필요합니다. `/health`, `/metrics`, `/sources`, Agent Card는 공개입니다.
-- 모든 응답에는 추적용 `requestId`가 포함됩니다.
+- 일반 API 응답에는 추적용 `requestId`가 포함됩니다. A2A HTTP+JSON 오류 응답은 표준 `error.status`와 `details`를 사용합니다.
 - 모델 제공자가 측정하지 않은 토큰 수는 임의로 표시하지 않습니다.
 - 브라우저 호출은 `CORS_ORIGIN`에 지정된 단일 출처만 허용합니다. 기본값은 비활성입니다.
 

@@ -181,9 +181,33 @@ paths:
                         type: array
                         items:
                           type: object
-                          properties:
-                            text:
-                              type: string
+                  properties:
+                    text:
+                      type: string
+        '400':
+          description: A2A 요청 검증 실패
+          content:
+            application/a2a+json:
+              schema:
+                $ref: '#/components/schemas/A2AErrorResponse'
+        '401':
+          description: 인증 실패
+          content:
+            application/a2a+json:
+              schema:
+                $ref: '#/components/schemas/A2AErrorResponse'
+        '404':
+          description: 요청 경로 또는 자료를 찾을 수 없음
+          content:
+            application/a2a+json:
+              schema:
+                $ref: '#/components/schemas/A2AErrorResponse'
+        '503':
+          description: 모델 또는 원격 에이전트를 사용할 수 없음
+          content:
+            application/a2a+json:
+              schema:
+                $ref: '#/components/schemas/A2AErrorResponse'
 components:
   schemas:
     AskRequest:
@@ -247,6 +271,25 @@ components:
               type: string
             requestId:
               type: string
+    A2AErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, status, message, details]
+          properties:
+            code:
+              type: integer
+            status:
+              type: string
+              enum: [INVALID_ARGUMENT, UNAUTHENTICATED, NOT_FOUND, UNAVAILABLE, INTERNAL]
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
     HealthResponse:
       type: object
       required: [status, service]
