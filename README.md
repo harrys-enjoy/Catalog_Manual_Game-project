@@ -1,5 +1,7 @@
 # Game Q&A API
 
+카탈로그·도감·세계관 데이터 작성 규칙은 [`docs/knowledge-authoring.md`](docs/knowledge-authoring.md)에서 확인할 수 있습니다.
+
 외부 업무생산성 서비스가 업무 중 게임 제작 정보를 요청할 수 있는 독립형 API입니다.
 
 ## 실행
