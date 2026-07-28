@@ -36,3 +36,9 @@ test('잘못된 JSON은 INVALID_REQUEST JSON을 반환한다', async () => {
   assert.equal(response.status, 400);
   assert.equal(body.error.code, 'INVALID_REQUEST');
 });
+
+test('기본 서버를 의존성 주입 없이 생성할 수 있다', () => {
+  const server = createServer();
+  assert.equal(typeof server.listen, 'function');
+  server.close();
+});

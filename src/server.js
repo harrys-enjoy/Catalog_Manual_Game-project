@@ -1,5 +1,10 @@
 import http from 'node:http';
+import { fileURLToPath } from 'node:url';
+import { createAgentRegistry } from './agents.js';
 import { AppError } from './errors.js';
+import { lookupKnowledge } from './knowledge.js';
+import { MockModelAdapter } from './model.js';
+import { createOrchestrator } from './orchestrator.js';
 import { createRequestId, parseJsonBody, validateAskRequest } from './request.js';
 
 const MAX_BODY_BYTES = 1_048_576;
@@ -27,7 +32,14 @@ function readBody(request) {
   });
 }
 
-export function createServer({ orchestrator } = {}) {
+export function createDefaultOrchestrator({ modelAdapter = new MockModelAdapter() } = {}) {
+  return createOrchestrator({
+    lookup: lookupKnowledge,
+    agents: createAgentRegistry({ modelAdapter }),
+  });
+}
+
+export function createServer({ orchestrator = createDefaultOrchestrator() } = {}) {
   if (!orchestrator || typeof orchestrator.ask !== 'function') {
     throw new TypeError('orchestrator.ask가 필요합니다.');
   }
@@ -49,5 +61,12 @@ export function createServer({ orchestrator } = {}) {
         error: { code: appError.code, message: appError.message, requestId },
       });
     }
+  });
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const port = Number(process.env.PORT || 3000);
+  createServer().listen(port, () => {
+    console.log(`game-qna-api listening on ${port}`);
   });
 }
