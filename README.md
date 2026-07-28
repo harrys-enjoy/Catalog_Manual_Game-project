@@ -15,6 +15,14 @@ npm start
 
 ## API
 
+연동 상태 확인:
+
+```http
+GET /health
+```
+
+응답: `{"status":"ok","service":"game-qna-api"}`
+
 ```http
 POST /api/ask
 Content-Type: application/json

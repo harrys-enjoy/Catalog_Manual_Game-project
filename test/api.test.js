@@ -42,3 +42,16 @@ test('기본 서버를 의존성 주입 없이 생성할 수 있다', () => {
   assert.equal(typeof server.listen, 'function');
   server.close();
 });
+
+test('GET /health가 모델 호출 없이 상태를 반환한다', async () => {
+  const server = createServer({
+    orchestrator: { ask: async () => { throw new Error('호출되면 안 됨'); } },
+  }).listen(0);
+  await once(server, 'listening');
+  const { port } = server.address();
+  const response = await fetch(`http://127.0.0.1:${port}/health`);
+  const body = await response.json();
+  server.close();
+  assert.equal(response.status, 200);
+  assert.deepEqual(body, { status: 'ok', service: 'game-qna-api' });
+});

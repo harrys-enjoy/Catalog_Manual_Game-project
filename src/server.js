@@ -56,6 +56,10 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {} } =
   return http.createServer(async (request, response) => {
     const requestId = createRequestId();
     try {
+      if (request.method === 'GET' && request.url === '/health') {
+        writeJson(response, 200, { status: 'ok', service: 'game-qna-api' });
+        return;
+      }
       if (request.method !== 'POST' || request.url !== '/api/ask') {
         throw new AppError('INTERNAL_ERROR', '요청 경로를 찾을 수 없습니다.', 404);
       }
