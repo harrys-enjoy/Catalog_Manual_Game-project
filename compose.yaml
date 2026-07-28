@@ -1,0 +1,9 @@
+services:
+  game-qna-api:
+    build:
+      context: .
+    env_file:
+      - .env
+    ports:
+      - "${PORT:-3000}:3000"
+    restart: unless-stopped
