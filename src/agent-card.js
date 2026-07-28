@@ -5,9 +5,9 @@ const skills = [
   ['lore', '게임 세계관 Q&A'],
 ];
 
-export function createAgentCard({ publicUrl = 'http://localhost:3000' } = {}) {
+export function createAgentCard({ publicUrl = 'http://localhost:3000', requiresAuth = false } = {}) {
   const baseUrl = publicUrl.replace(/\/$/, '');
-  return {
+  const card = {
     name: 'game-qna-agent',
     description: '게임 기획·아트 가이드 및 게임 콘텐츠 Q&A 전문 에이전트',
     url: `${baseUrl}/a2a`,
@@ -22,8 +22,11 @@ export function createAgentCard({ publicUrl = 'http://localhost:3000' } = {}) {
       inputModes: ['application/json'],
       outputModes: ['application/json'],
     })),
-    securitySchemes: {
-      bearerAuth: { type: 'http', scheme: 'bearer' },
-    },
   };
+  if (requiresAuth) {
+    card.securitySchemes = {
+      bearerAuth: { type: 'http', scheme: 'bearer' },
+    };
+  }
+  return card;
 }

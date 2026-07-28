@@ -83,7 +83,7 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, co
         return;
       }
       if (request.method === 'GET' && request.url === '/.well-known/agent-card.json') {
-        writeJson(response, 200, createAgentCard({ publicUrl }), headers);
+        writeJson(response, 200, createAgentCard({ publicUrl, requiresAuth: Boolean(apiKey) }), headers);
         return;
       }
       if (apiKey && ['/api/ask', '/a2a'].includes(request.url) && request.headers.authorization !== `Bearer ${apiKey}`) {
