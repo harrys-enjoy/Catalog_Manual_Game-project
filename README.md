@@ -14,7 +14,9 @@
 Copy-Item .env.example .env
 ```
 
-현재 `API_KEY`, `CORS_ORIGIN`, 원격 agent URL은 서버에 바로 적용됩니다. `MODEL_API_KEY`와 `MODEL_BASE_URL`은 Qwen 또는 Elice 모델 어댑터를 연결할 때 사용하며, 클라이언트에 노출하지 않습니다.
+현재 `API_KEY`, `CORS_ORIGIN`, 원격 agent URL은 서버에 바로 적용됩니다. `MODEL_NAME`, `MODEL_BASE_URL`, `MODEL_API_KEY`가 모두 있으면 기본 서버가 OpenAI 호환 Chat Completions 어댑터를 자동 사용하고, 없으면 Mock 어댑터로 실행됩니다. 모델 키는 클라이언트에 노출하지 않습니다.
+
+Qwen endpoint를 Elice로 교체할 때는 `.env`의 `MODEL_NAME`, `MODEL_BASE_URL`, `MODEL_API_KEY`만 변경하면 됩니다. Elice endpoint가 OpenAI 호환 형식이 아니면 `src/model-factory.js`에 Elice 전용 provider 분기를 추가합니다.
 
 ```bash
 npm test

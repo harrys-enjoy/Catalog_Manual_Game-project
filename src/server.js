@@ -4,7 +4,7 @@ import { createHttpAgent } from './a2a.js';
 import { createAgentRegistry } from './agents.js';
 import { AppError } from './errors.js';
 import { lookupKnowledge } from './knowledge.js';
-import { MockModelAdapter } from './model.js';
+import { createModelAdapterFromEnv } from './model-factory.js';
 import { createOrchestrator } from './orchestrator.js';
 import { createRequestId, parseJsonBody, validateAskRequest } from './request.js';
 import { loadEnvFile } from './config.js';
@@ -48,7 +48,7 @@ function readBody(request) {
   });
 }
 
-export function createDefaultOrchestrator({ modelAdapter = new MockModelAdapter(), remoteAgents = {} } = {}) {
+export function createDefaultOrchestrator({ modelAdapter = createModelAdapterFromEnv(), remoteAgents = {} } = {}) {
   const agents = createAgentRegistry({ modelAdapter });
   for (const [agentName, target] of Object.entries(remoteAgents)) {
     const agent = typeof target === 'string'
