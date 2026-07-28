@@ -20,13 +20,33 @@ function writeJson(response, statusCode, body, headers = {}, contentType = 'appl
   response.end(JSON.stringify(body));
 }
 
+function writeA2AError(response, error, headers) {
+  const status = {
+    400: 'INVALID_ARGUMENT',
+    401: 'UNAUTHENTICATED',
+    404: 'NOT_FOUND',
+    503: 'UNAVAILABLE',
+  }[error.statusCode] ?? 'INTERNAL';
+  writeJson(response, error.statusCode, {
+    error: {
+      code: error.statusCode,
+      status,
+      message: error.message,
+      details: [{
+        '@type': 'type.googleapis.com/google.rpc.BadRequest',
+        fieldViolations: [],
+      }],
+    },
+  }, headers, 'application/a2a+json; charset=utf-8');
+}
+
 function corsHeaders(request, corsOrigin) {
   const origin = request.headers.origin;
   return corsOrigin && origin === corsOrigin
     ? {
       'access-control-allow-origin': corsOrigin,
       'access-control-allow-methods': 'GET, POST, OPTIONS',
-      'access-control-allow-headers': 'content-type',
+      'access-control-allow-headers': 'authorization, content-type',
       vary: 'Origin',
     }
     : {};
@@ -117,6 +137,10 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, co
       const appError = error instanceof AppError
         ? error
         : new AppError('INTERNAL_ERROR', '서버에서 요청을 처리하지 못했습니다.', 500);
+      if (request.method === 'POST' && request.url === '/message:send') {
+        writeA2AError(response, appError, headers);
+        return;
+      }
       writeJson(response, appError.statusCode, {
         error: { code: appError.code, message: appError.message, requestId },
       }, headers);
