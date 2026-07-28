@@ -1,0 +1,45 @@
+import { AppError } from './errors.js';
+
+export function createAgentRequest({ requestId, mode, question, context = {}, evidence = [] }) {
+  return { requestId, mode, question, context, evidence };
+}
+
+function normalizeAgentResponse(payload, agentName) {
+  if (!payload || typeof payload.answer !== 'string') {
+    throw new AppError('MODEL_UNAVAILABLE', '원격 에이전트 응답 형식이 올바르지 않습니다.', 503);
+  }
+  return {
+    answer: payload.answer,
+    agent: agentName,
+    sources: Array.isArray(payload.sources) ? payload.sources : [],
+    usage: payload.usage ?? null,
+    confidence: Number.isFinite(payload.confidence) ? payload.confidence : null,
+  };
+}
+
+export function createHttpAgent({ agentName, endpoint, fetchImpl = fetch }) {
+  if (!agentName || !endpoint) throw new TypeError('agentName과 endpoint가 필요합니다.');
+  return {
+    async ask(input) {
+      let response;
+      try {
+        response = await fetchImpl(endpoint, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(createAgentRequest(input)),
+        });
+      } catch {
+        throw new AppError('MODEL_UNAVAILABLE', '원격 에이전트에 연결할 수 없습니다.', 503);
+      }
+      if (!response.ok) {
+        throw new AppError('MODEL_UNAVAILABLE', '원격 에이전트가 요청을 처리하지 못했습니다.', 503);
+      }
+      try {
+        return normalizeAgentResponse(await response.json(), agentName);
+      } catch (error) {
+        if (error instanceof AppError) throw error;
+        throw new AppError('MODEL_UNAVAILABLE', '원격 에이전트 응답을 읽지 못했습니다.', 503);
+      }
+    },
+  };
+}

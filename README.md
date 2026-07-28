@@ -74,6 +74,21 @@ server.listen(3000);
 
 실제 LangChain provider 패키지와 모델 설정은 사용하는 제공자의 공식 문서를 따릅니다. Elice ML API의 엔드포인트·인증·요청 형식은 기술 명세가 확보된 뒤 별도 어댑터로 연결하며, 이 API의 외부 계약은 변경하지 않습니다.
 
+## A2A 에이전트 연결
+
+외부 에이전트는 `createHttpAgent()`로 내부 에이전트와 같은 `ask()` 계약으로 감쌀 수 있습니다.
+
+```js
+import { createHttpAgent } from './src/a2a.js';
+
+const remoteLoreAgent = createHttpAgent({
+  agentName: 'remote-lore',
+  endpoint: process.env.LORE_AGENT_URL,
+});
+```
+
+오케스트레이터의 `agents` 맵에서 같은 이름의 에이전트를 교체하면 됩니다. 요청은 `requestId`, `mode`, `question`, `context`, `evidence`를 포함하고, 응답은 `answer`, `agent`, `sources`, `usage`, `confidence`로 정규화됩니다. 외부 A2A 서버·레지스트리·재시도 큐는 현재 API가 소유하지 않습니다.
+
 ## 외부 연동 원칙
 
 - 업무생산성 메인페이지와 아침 업무 브리핑 UI는 이 프로젝트가 만들지 않습니다.
