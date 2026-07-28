@@ -147,6 +147,8 @@ const server = createServer({
 
 전체 HTTP 계약은 [`docs/api/openapi.yaml`](docs/api/openapi.yaml)에서 확인할 수 있습니다.
 
+업무생산성 서비스 담당자를 위한 연결 절차와 요청 예시는 [`docs/integration/productivity-a2a.md`](docs/integration/productivity-a2a.md)에 정리했습니다.
+
 ### A2A HTTP+JSON 표준 메시지 경로
 
 `POST /message:send`는 A2A HTTP+JSON의 동기 텍스트 메시지 경로입니다. 요청과 응답의 콘텐츠 타입은 `application/a2a+json`이며, `ROLE_USER` 텍스트 파트를 받아 `ROLE_AGENT` 텍스트 메시지 하나를 반환합니다. `metadata.mode`, `metadata.context`, `metadata.evidence`로 이 서비스의 게임 Q&A 맥락을 전달할 수 있습니다.
