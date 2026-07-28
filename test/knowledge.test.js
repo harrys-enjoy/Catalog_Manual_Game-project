@@ -15,6 +15,17 @@ test('CC0 오픈 게임 소스 기반 도감 항목을 조회한다', () => {
   ]);
 });
 
+test('독자 세계관의 세력과 사건을 직접 조회한다', () => {
+  assert.equal(
+    lookupKnowledge('lore', '항로 감시단은 어떤 세력인가요?').sources[0],
+    'lore:route-watch',
+  );
+  assert.equal(
+    lookupKnowledge('lore', '빛바랜 항로 사건을 알려줘').sources[0],
+    'lore:faded-route-incident',
+  );
+});
+
 test('codex 질문은 모델 없이 도감 데이터를 반환한다', () => {
   const result = lookupKnowledge('codex', '루멘의 약점은 무엇인가?');
   assert.equal(result.answer, '루멘의 약점은 냉기 속성입니다.');

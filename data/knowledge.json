@@ -31,6 +31,33 @@
   ],
   "lore": [
     {
+      "id": "glass-star-origin",
+      "name": "유리별의 기원",
+      "keywords": ["유리별", "유리별의 기원"],
+      "answer": "유리별은 오래전 상층 대기가 굳어 만들어진 거대한 빛의 결정체라는 독자 설정입니다. 지상 항로는 유리별의 빛을 기준으로 방향을 정합니다.",
+      "sourceRef": "oga-starfields",
+      "originalContent": true,
+      "inspirationSources": ["oga-starfields"]
+    },
+    {
+      "id": "route-watch",
+      "name": "항로 감시단",
+      "keywords": ["항로 감시단", "감시단"],
+      "answer": "항로 감시단은 유리별의 파편과 지상 항로를 관리하는 중립 세력이라는 독자 설정입니다. 어느 도시에도 속하지 않으며 탐사대의 통행 기록을 보관합니다.",
+      "sourceRef": "oga-starfields",
+      "originalContent": true,
+      "inspirationSources": ["oga-starfields"]
+    },
+    {
+      "id": "faded-route-incident",
+      "name": "빛바랜 항로 사건",
+      "keywords": ["빛바랜 항로 사건", "빛바랜 항로"],
+      "answer": "빛바랜 항로 사건은 유리별의 빛이 약해져 오래된 탐사 항로가 끊긴 사건이라는 독자 설정입니다. 이후 항로 감시단과 각 도시 탐사대 사이에 새로운 길의 관리권을 둘러싼 갈등이 생겼습니다.",
+      "sourceRef": "oga-starfields",
+      "originalContent": true,
+      "inspirationSources": ["oga-starfields"]
+    },
+    {
       "id": "oga-starfields",
       "name": "Starfields",
       "keywords": ["Starfields", "스타필드 배경", "우주 배경"],
