@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { lookupKnowledge, validateKnowledgeSources } from '../src/knowledge.js';
+import { listKnowledge, lookupKnowledge, validateKnowledgeSources } from '../src/knowledge.js';
 
 test('출처가 있는 지식 항목은 CC0 출처를 참조해야 한다', () => {
   assert.throws(
@@ -63,4 +63,38 @@ test('codex 질문은 모델 없이 도감 데이터를 반환한다', () => {
 
 test('자료가 없는 질문은 null을 반환한다', () => {
   assert.equal(lookupKnowledge('catalog', '없는 아이템을 보여줘'), null);
+});
+test('항목명 사이의 공백과 문장부호가 달라도 등록 자료를 찾는다', () => {
+  const result = lookupKnowledge('codex', '루 멘이라는 인물');
+  assert.equal(result.answer, '루멘의 약점은 냉기 속성입니다.');
+});
+test('기획·아트 가이드는 등록된 기본 가이드 자료를 직접 반환한다', () => {
+  const result = lookupKnowledge('dev-guide', '게임 루프를 설계하는 방법을 알려줘');
+  assert.equal(result.sources[0], 'dev-guide:game-loop');
+  assert.match(result.answer, /핵심 행동/);
+});
+
+test('전우치와 홍길동의 신념 항목을 각각 조회한다', () => {
+  assert.equal(lookupKnowledge('lore', '\uC804\uC6B0\uCE58').sources[0], 'lore:jeonuchi-freedom');
+  assert.equal(lookupKnowledge('lore', '\uD64D\uAE38\uB3D9').sources[0], 'lore:honggildong-order');
+});
+
+test('전우치와 홍길동의 공동 사건을 조회한다', () => {
+  const result = lookupKnowledge('lore', '\uC2DC\uBBFC \uAE30\uB85D \uC870\uC791 \uC0AC\uAC74');
+  assert.equal(result.sources[0], 'lore:record-forgery-incident');
+});
+
+test('신규 전우치·홍길동 lore 항목은 독자 창작 메타데이터를 가진다', () => {
+  const ids = [
+    'jeonuchi-freedom', 'honggildong-order', 'record-forgery-incident',
+    'wind-community', 'glass-star-heart', 'choice-axis-freedom-order',
+    'campaign-record-choice', 'campaign-wind-thief', 'campaign-glass-heart',
+    'campaign-choice-war', 'campaign-no-good-evil', 'ending-jeonuchi',
+    'ending-honggildong', 'ending-cooperation', 'ending-independent',
+  ];
+  const entries = listKnowledge('lore', { full: true }).filter((entry) => ids.includes(entry.id));
+  assert.equal(entries.length, ids.length);
+  assert.ok(entries.every((entry) => entry.originalContent === true));
+  assert.ok(entries.every((entry) => entry.inspirationSources.length === 2));
+  assert.ok(entries.every((entry) => entry.sourceRef === null));
 });

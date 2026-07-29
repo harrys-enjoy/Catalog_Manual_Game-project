@@ -155,3 +155,19 @@ test('well-known Agent Card를 공개한다', async () => {
   assert.equal(body.url, 'https://game.example/message:send');
   assert.equal(body.skills.length, 4);
 });
+
+test('lore API는 전우치와 홍길동의 신념 대립을 반환한다', async () => {
+  const server = createServer().listen(0);
+  await once(server, 'listening');
+  const { port } = server.address();
+  const response = await fetch(`http://127.0.0.1:${port}/api/ask`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ mode: 'lore', question: '\uC2DC\uBBFC \uAE30\uB85D \uC870\uC791 \uC0AC\uAC74' }),
+  });
+  const body = await response.json();
+  server.close();
+  assert.equal(response.status, 200);
+  assert.match(body.answer, /전우치/);
+  assert.match(body.answer, /홍길동/);
+});
