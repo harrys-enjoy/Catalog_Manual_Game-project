@@ -171,3 +171,18 @@ test('lore API는 전우치와 홍길동의 신념 대립을 반환한다', asyn
   assert.match(body.answer, /전우치/);
   assert.match(body.answer, /홍길동/);
 });
+
+test('POST /api/ask는 locale에 맞는 lore 답변을 반환한다', async () => {
+  const server = createServer().listen(0);
+  await once(server, 'listening');
+  const { port } = server.address();
+  const response = await fetch(`http://127.0.0.1:${port}/api/ask`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ mode: 'lore', locale: 'en', question: 'Jeon Woo-chi' }),
+  });
+  const body = await response.json();
+  server.close();
+  assert.equal(response.status, 200);
+  assert.match(body.answer, /freedom|records/i);
+});

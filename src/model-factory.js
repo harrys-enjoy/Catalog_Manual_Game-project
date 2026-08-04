@@ -23,11 +23,26 @@ class OpenAICompatibleChatModel {
         signal: AbortSignal.timeout(this.timeoutMs),
         body: JSON.stringify({ model: this.modelName, messages, temperature: 0.2, max_tokens: 800 }),
       });
-    } catch {
-      throw new AppError('MODEL_UNAVAILABLE', 'LLM endpoint에 연결할 수 없습니다.', 503);
+    } catch (error) {
+      const cause = error?.cause;
+      const nested = Array.isArray(cause?.errors) ? cause.errors[0] : cause;
+      const code = nested?.code || error?.code || error?.name;
+      const target = nested?.address && nested?.port ? ` ${nested.address}:${nested.port}` : '';
+      const message = nested?.message || cause?.message || error?.message;
+      const detail = code ? ` (${code}${target}${message ? `: ${String(message).slice(0, 160)}` : ''})` : '';
+      throw new AppError('MODEL_UNAVAILABLE', `LLM endpoint에 연결할 수 없습니다${detail}.`, 503);
     }
     if (!response.ok) {
-      throw new AppError('MODEL_UNAVAILABLE', 'LLM endpoint가 요청을 처리하지 못했습니다.', 503);
+      let detail = '';
+      try {
+        const raw = await response.text();
+        const payload = JSON.parse(raw);
+        detail = payload.detail || payload.error?.message || payload.message || '';
+      } catch {
+        // Keep the provider status when the error body is not JSON.
+      }
+      const suffix = detail ? `: ${String(detail).slice(0, 300)}` : '';
+      throw new AppError('MODEL_UNAVAILABLE', `LLM endpoint HTTP ${response.status}${suffix}`, 503);
     }
     const payload = await response.json();
     const content = payload?.choices?.[0]?.message?.content;

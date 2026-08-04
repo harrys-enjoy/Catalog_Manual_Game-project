@@ -12,6 +12,7 @@ function cacheKey(request) {
   const context = request.context ?? {};
   return JSON.stringify([
     request.mode,
+    request.locale ?? 'ko',
     request.question,
     context.projectId ?? '',
     context.userId ?? '',
@@ -49,7 +50,7 @@ export function createOrchestrator({ agents, lookup, cacheTtlMs = 60_000, cacheM
       const cached = readCache(request);
       if (cached) return cached;
 
-      const direct = lookup(request.mode, request.question);
+      const direct = lookup(request.mode, request.question, request.locale ?? 'ko');
       if (direct) {
         metrics.directKnowledgeResponses += 1;
         const response = {

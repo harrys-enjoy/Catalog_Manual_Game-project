@@ -98,3 +98,26 @@ test('신규 전우치·홍길동 lore 항목은 독자 창작 메타데이터�
   assert.ok(entries.every((entry) => entry.inspirationSources.length === 2));
   assert.ok(entries.every((entry) => entry.sourceRef === null));
 });
+
+test('재의 장부 번외편의 핵심 항목을 검색할 수 있다', () => {
+  const ids = [
+    'side-ashes-ledger',
+    'side-unnamed-society',
+    'side-yeonhwa',
+    'side-jeonuchi-fall',
+    'side-honggildong-fall',
+    'side-third-banner',
+  ];
+  const entries = listKnowledge('lore', { full: true })
+    .filter((entry) => ids.includes(entry.id));
+  assert.equal(entries.length, ids.length);
+  assert.ok(entries.every((entry) => entry.originalContent === true));
+  assert.ok(entries.every((entry) => entry.sourceRef === null));
+});
+
+test('재의 장부 키워드로 무명회와 연화의 번외 내용을 조회한다', () => {
+  const society = lookupKnowledge('lore', '무명회는 어떤 세력인가');
+  const yeonhwa = lookupKnowledge('lore', '연화는 누구인가');
+  assert.equal(society.sources[0], 'lore:side-unnamed-society');
+  assert.equal(yeonhwa.sources[0], 'lore:side-yeonhwa');
+});
