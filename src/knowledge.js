@@ -75,6 +75,8 @@ export function listKnowledge(mode, { full = false, locale = 'ko' } = {}) {
       sourceRef: entry.sourceRef ?? null,
       originalContent: entry.originalContent ?? false,
       inspirationSources: entry.inspirationSources ?? [],
+      relatedLoreIds: entry.relatedLoreIds ?? [],
+      relatedCodexIds: entry.relatedCodexIds ?? [],
     };
   });
 }

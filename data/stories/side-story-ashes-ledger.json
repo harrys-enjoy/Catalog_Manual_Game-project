@@ -7,6 +7,7 @@
     "originalContent": true,
     "sourceRef": null,
     "inspirationSources": ["original-lore", "jeonuchi-honggildong-adaptation"],
+    "relatedCodexIds": ["unnamed-society-codex"],
     "storyArc": "side-story"
   },
   {
@@ -17,6 +18,7 @@
     "originalContent": true,
     "sourceRef": null,
     "inspirationSources": ["original-lore", "jeonuchi-honggildong-adaptation"],
+    "relatedCodexIds": ["unnamed-society-codex"],
     "storyArc": "side-story"
   },
   {
@@ -27,6 +29,7 @@
     "originalContent": true,
     "sourceRef": null,
     "inspirationSources": ["original-lore", "jeonuchi-honggildong-adaptation"],
+    "relatedCodexIds": ["yeonhwa-codex", "unnamed-society-codex"],
     "storyArc": "side-story"
   },
   {
@@ -37,6 +40,7 @@
     "originalContent": true,
     "sourceRef": null,
     "inspirationSources": ["original-lore", "jeonuchi-honggildong-adaptation"],
+    "relatedCodexIds": ["wind-band-codex"],
     "storyArc": "side-story"
   },
   {
@@ -47,6 +51,7 @@
     "originalContent": true,
     "sourceRef": null,
     "inspirationSources": ["original-lore", "jeonuchi-honggildong-adaptation"],
+    "relatedCodexIds": ["alive-community-codex"],
     "storyArc": "side-story"
   },
   {
@@ -57,6 +62,7 @@
     "originalContent": true,
     "sourceRef": null,
     "inspirationSources": ["original-lore", "jeonuchi-honggildong-adaptation"],
+    "relatedCodexIds": ["yeonhwa-codex", "unnamed-society-codex"],
     "storyArc": "side-story"
   }
 ]

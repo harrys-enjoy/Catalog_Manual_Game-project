@@ -35,9 +35,14 @@ input:focus, select:focus, textarea:focus { border-color: #91a7ff; box-shadow: 0
 .secondary:hover { background: #17244a; }
 .content-list { display: grid; gap: 12px; }
 .content-card { padding: 18px; border: 1px solid #354469; border-radius: 12px; background: #0e1730; }
+.content-card-highlight { border-color: #b0bfff; box-shadow: 0 0 0 3px rgba(145, 167, 255, .2); }
 .content-card h3 { margin: 0 0 10px; color: #dce3ff; font-size: 17px; }
 .content-card p { margin: 0 0 12px; color: #c7d0ee; line-height: 1.7; white-space: pre-wrap; }
 .content-card small { color: #8996bb; }
+.related-content { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 14px; padding-top: 12px; border-top: 1px solid #2b385f; }
+.related-content strong { color: #aebdff; font-size: 12px; }
+.related-content-link { padding: 6px 9px; border: 1px solid #526493; background: transparent; color: #c4ceff; font-size: 12px; font-weight: 600; }
+.related-content-link:hover { background: #17244a; }
 .muted { color: #8996bb; font-size: 13px; }
 .local-only { padding: 6px 10px; border: 1px solid #41537e; border-radius: 999px; color: #aebdff; font-size: 12px; white-space: nowrap; }
 .status { padding: 8px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }

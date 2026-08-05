@@ -28,6 +28,8 @@ const elements = {
   sources: document.querySelector('#sources'),
 };
 
+let pendingContentFocus = null;
+
 function showError(message) {
   elements.error.textContent = message;
   elements.error.hidden = false;
@@ -76,17 +78,43 @@ async function loadSuggestions() {
   }
 }
 
+function relatedModeFor(mode) {
+  if (mode === 'lore') return 'codex';
+  if (mode === 'codex') return 'lore';
+  return null;
+}
+
+function focusContentCard(id) {
+  const card = document.querySelector(`[data-content-id="${id}"]`);
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  card.classList.add('content-card-highlight');
+  window.setTimeout(() => card.classList.remove('content-card-highlight'), 1600);
+}
+
 async function loadFullContent() {
   elements.contentList.textContent = '콘텐츠를 불러오는 중입니다.';
   try {
-    const response = await fetch(`/knowledge?mode=${encodeURIComponent(elements.mode.value)}&locale=${encodeURIComponent(elements.locale.value)}&full=true`);
-    if (!response.ok) throw new Error('content request failed');
-    const body = await response.json();
+    const mode = elements.mode.value;
+    const locale = elements.locale.value;
+    const relatedMode = relatedModeFor(mode);
+    const urls = [
+      `/knowledge?mode=${encodeURIComponent(mode)}&locale=${encodeURIComponent(locale)}&full=true`,
+      relatedMode
+        ? `/knowledge?mode=${encodeURIComponent(relatedMode)}&locale=${encodeURIComponent(locale)}&full=true`
+        : null,
+    ].filter(Boolean);
+    const responses = await Promise.all(urls.map((url) => fetch(url)));
+    if (responses.some((response) => !response.ok)) throw new Error('content request failed');
+    const bodies = await Promise.all(responses.map((response) => response.json()));
+    const body = bodies[0];
+    const relatedById = new Map((bodies[1]?.entries ?? []).map((entry) => [entry.id, entry]));
     elements.contentMeta.textContent = `${body.entries.length}개 항목`;
     elements.contentList.textContent = '';
     for (const entry of body.entries) {
       const card = document.createElement('article');
       card.className = 'content-card';
+      card.dataset.contentId = entry.id;
       const title = document.createElement('h3');
       title.textContent = entry.name;
       const answer = document.createElement('p');
@@ -94,7 +122,36 @@ async function loadFullContent() {
       const keywords = document.createElement('small');
       keywords.textContent = `키워드: ${(entry.keywords ?? []).join(', ')}`;
       card.append(title, answer, keywords);
+      const relatedIds = mode === 'lore' ? entry.relatedCodexIds : entry.relatedLoreIds;
+      const relatedEntries = (relatedIds ?? []).map((id) => relatedById.get(id)).filter(Boolean);
+      if (relatedEntries.length > 0) {
+        const related = document.createElement('div');
+        related.className = 'related-content';
+        const relatedTitle = document.createElement('strong');
+        relatedTitle.textContent = mode === 'lore' ? '관련 도감' : '관련 세계관';
+        related.append(relatedTitle);
+        for (const relatedEntry of relatedEntries) {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'related-content-link';
+          button.textContent = relatedEntry.name;
+          button.addEventListener('click', () => {
+            pendingContentFocus = { mode: relatedMode, id: relatedEntry.id };
+            elements.mode.value = relatedMode;
+            elements.modeHint.textContent = modeLabels[relatedMode];
+            loadSuggestions();
+            loadFullContent();
+          });
+          related.append(button);
+        }
+        card.append(related);
+      }
       elements.contentList.append(card);
+    }
+    if (pendingContentFocus?.mode === mode) {
+      const focusId = pendingContentFocus.id;
+      pendingContentFocus = null;
+      window.setTimeout(() => focusContentCard(focusId), 0);
     }
   } catch {
     elements.contentList.textContent = '콘텐츠를 불러오지 못했습니다.';

@@ -121,3 +121,28 @@ test('재의 장부 키워드로 무명회와 연화의 번외 내용을 조회�
   assert.equal(society.sources[0], 'lore:side-unnamed-society');
   assert.equal(yeonhwa.sources[0], 'lore:side-yeonhwa');
 });
+
+test('인물·세력 도감과 세계관 항목이 양방향으로 연결된다', () => {
+  const lore = listKnowledge('lore', { full: true });
+  const codex = listKnowledge('codex', { full: true });
+  const loreById = new Map(lore.map((entry) => [entry.id, entry]));
+  const codexById = new Map(codex.map((entry) => [entry.id, entry]));
+  const linkedCodexIds = [
+    'jeonuchi-codex', 'honggildong-codex', 'yeonhwa-codex',
+    'wind-band-codex', 'alive-community-codex', 'unnamed-society-codex',
+  ];
+  assert.ok(linkedCodexIds.every((id) => codexById.get(id).relatedLoreIds.length > 0));
+
+  for (const entry of codex.filter((item) => item.relatedLoreIds?.length)) {
+    for (const loreId of entry.relatedLoreIds) {
+      assert.ok(loreById.has(loreId));
+      assert.ok(loreById.get(loreId).relatedCodexIds.includes(entry.id));
+    }
+  }
+  for (const entry of lore.filter((item) => item.relatedCodexIds?.length)) {
+    for (const codexId of entry.relatedCodexIds) {
+      assert.ok(codexById.has(codexId));
+      assert.ok(codexById.get(codexId).relatedLoreIds.includes(entry.id));
+    }
+  }
+});

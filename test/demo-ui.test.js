@@ -38,6 +38,10 @@ test('데모 UI 정적 자산을 반환한다', async () => {
   assert.match(script.headers.get('content-type'), /javascript/);
   assert.equal(styles.status, 200);
   assert.match(styles.headers.get('content-type'), /css/);
+  const scriptText = await script.text();
+  assert.match(scriptText, /relatedLoreIds/);
+  assert.match(scriptText, /relatedCodexIds/);
+  assert.match(scriptText, /scrollIntoView/);
 });
 
 test('GET /knowledge?mode=codex가 질문용 항목 목록을 반환한다', async () => {
@@ -78,4 +82,15 @@ test('GET /knowledge?mode=lore&full=true가 전우치·홍길동 콘텐츠와 �
   assert.equal(honggildong.originalContent, true);
   assert.equal(jeonuchi.inspirationSources.length, 2);
   assert.equal(honggildong.inspirationSources.length, 2);
+});
+
+test('전체 세계관 콘텐츠는 관련 도감 ID를 반환한다', async () => {
+  const { server, baseUrl } = await startServer();
+  const response = await fetch(`${baseUrl}/knowledge?mode=lore&full=true`);
+  const body = await response.json();
+  server.close();
+
+  const entry = body.entries.find((item) => item.id === 'honggildong-order');
+  assert.ok(entry.relatedCodexIds.includes('honggildong-codex'));
+  assert.ok(entry.relatedCodexIds.includes('alive-community-codex'));
 });
