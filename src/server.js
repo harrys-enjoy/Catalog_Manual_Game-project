@@ -1,11 +1,12 @@
 import http from 'node:http';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createHttpAgent } from './a2a.js';
 import { toAgentRequest, toSendMessageResponse } from './a2a-http.js';
 import { createAgentCard } from './agent-card.js';
 import { createAgentRegistry } from './agents.js';
 import { AppError } from './errors.js';
-import { listSources, lookupKnowledge } from './knowledge.js';
+import { listKnowledge, listSources, lookupKnowledge } from './knowledge.js';
 import { createModelAdapterFromEnv } from './model-factory.js';
 import { createOrchestrator } from './orchestrator.js';
 import { createRequestId, parseJsonBody, validateAgentRequest, validateAskRequest } from './request.js';
@@ -14,6 +15,11 @@ import { loadEnvFile } from './config.js';
 loadEnvFile();
 
 const MAX_BODY_BYTES = 1_048_576;
+const STATIC_ASSETS = {
+  '/': { file: fileURLToPath(new URL('../public/index.html', import.meta.url)), contentType: 'text/html; charset=utf-8' },
+  '/app.js': { file: fileURLToPath(new URL('../public/app.js', import.meta.url)), contentType: 'text/javascript; charset=utf-8' },
+  '/styles.css': { file: fileURLToPath(new URL('../public/styles.css', import.meta.url)), contentType: 'text/css; charset=utf-8' },
+};
 
 function writeJson(response, statusCode, body, headers = {}, contentType = 'application/json; charset=utf-8') {
   response.writeHead(statusCode, { 'content-type': contentType, ...headers });
@@ -103,6 +109,12 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, co
         writeJson(response, 200, { status: 'ok', service: 'game-qna-api' }, headers);
         return;
       }
+      if (request.method === 'GET' && STATIC_ASSETS[request.url]) {
+        const asset = STATIC_ASSETS[request.url];
+        response.writeHead(200, { ...headers, 'content-type': asset.contentType, 'cache-control': 'no-cache' });
+        response.end(readFileSync(asset.file));
+        return;
+      }
       if (request.method === 'GET' && request.url === '/metrics') {
         writeJson(response, 200, orchestrator.getMetrics?.() ?? {
           cacheHits: 0,
@@ -113,6 +125,14 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, co
       }
       if (request.method === 'GET' && request.url === '/sources') {
         writeJson(response, 200, { sources: listSources() }, headers);
+        return;
+      }
+      if (request.method === 'GET' && request.url.startsWith('/knowledge')) {
+        const url = new URL(request.url, 'http://localhost');
+        const mode = url.searchParams.get('mode') || '';
+        const locale = url.searchParams.get('locale') || 'ko';
+        const full = url.searchParams.get('full') === 'true';
+        writeJson(response, 200, { mode, locale, entries: listKnowledge(mode, { full, locale }) }, headers);
         return;
       }
       if (request.method === 'GET' && request.url === '/.well-known/agent-card.json') {

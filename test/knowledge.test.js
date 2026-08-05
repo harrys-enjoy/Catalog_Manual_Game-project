@@ -98,3 +98,51 @@ test('신규 전우치·홍길동 lore 항목은 독자 창작 메타데이터�
   assert.ok(entries.every((entry) => entry.inspirationSources.length === 2));
   assert.ok(entries.every((entry) => entry.sourceRef === null));
 });
+
+test('재의 장부 번외편의 핵심 항목을 검색할 수 있다', () => {
+  const ids = [
+    'side-ashes-ledger',
+    'side-unnamed-society',
+    'side-yeonhwa',
+    'side-jeonuchi-fall',
+    'side-honggildong-fall',
+    'side-third-banner',
+  ];
+  const entries = listKnowledge('lore', { full: true })
+    .filter((entry) => ids.includes(entry.id));
+  assert.equal(entries.length, ids.length);
+  assert.ok(entries.every((entry) => entry.originalContent === true));
+  assert.ok(entries.every((entry) => entry.sourceRef === null));
+});
+
+test('재의 장부 키워드로 무명회와 연화의 번외 내용을 조회한다', () => {
+  const society = lookupKnowledge('lore', '무명회는 어떤 세력인가');
+  const yeonhwa = lookupKnowledge('lore', '연화는 누구인가');
+  assert.equal(society.sources[0], 'lore:side-unnamed-society');
+  assert.equal(yeonhwa.sources[0], 'lore:side-yeonhwa');
+});
+
+test('인물·세력 도감과 세계관 항목이 양방향으로 연결된다', () => {
+  const lore = listKnowledge('lore', { full: true });
+  const codex = listKnowledge('codex', { full: true });
+  const loreById = new Map(lore.map((entry) => [entry.id, entry]));
+  const codexById = new Map(codex.map((entry) => [entry.id, entry]));
+  const linkedCodexIds = [
+    'jeonuchi-codex', 'honggildong-codex', 'yeonhwa-codex',
+    'wind-band-codex', 'alive-community-codex', 'unnamed-society-codex',
+  ];
+  assert.ok(linkedCodexIds.every((id) => codexById.get(id).relatedLoreIds.length > 0));
+
+  for (const entry of codex.filter((item) => item.relatedLoreIds?.length)) {
+    for (const loreId of entry.relatedLoreIds) {
+      assert.ok(loreById.has(loreId));
+      assert.ok(loreById.get(loreId).relatedCodexIds.includes(entry.id));
+    }
+  }
+  for (const entry of lore.filter((item) => item.relatedCodexIds?.length)) {
+    for (const codexId of entry.relatedCodexIds) {
+      assert.ok(codexById.has(codexId));
+      assert.ok(codexById.get(codexId).relatedLoreIds.includes(entry.id));
+    }
+  }
+});

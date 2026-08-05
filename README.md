@@ -2,6 +2,14 @@
 
 카탈로그·도감·세계관 데이터 작성 규칙은 [`docs/knowledge-authoring.md`](docs/knowledge-authoring.md)에서 확인할 수 있습니다.
 
+번외편 검색 예시:
+
+- `재의 장부가 무엇인가`
+- `무명회는 어떤 세력인가`
+- `전우치 세력은 왜 몰락했는가`
+- `홍길동 세력은 어떻게 해체되었는가`
+- `연화의 최종 선택은 무엇인가`
+
 외부 업무생산성 서비스가 업무 중 게임 제작 정보를 요청할 수 있는 독립형 API입니다.
 
 ## 실행
@@ -188,3 +196,20 @@ const server = createServer({
 클라이언트는 `createDiscoveredHttpAgent()`를 사용해 Agent Card를 한 번 조회한 뒤 카드의 `url`로 A2A 요청을 보낼 수 있습니다.
 
 Bearer 인증이 필요하면 agent factory의 `headers`에 `authorization: 'Bearer <API_KEY>'`를 전달합니다.
+## 로컬 데모 UI
+
+외부 업무생산성 서비스와 연결하기 전에 현재 Game Q&A API만 확인하려면 다음처럼 실행합니다.
+
+```powershell
+npm start
+```
+
+브라우저에서 `http://localhost:3000/`을 엽니다. 화면에서 질문 모드와 질문을 선택하면 `/api/ask` 응답을 확인할 수 있습니다. API 서버 상태는 화면 상단의 `API 정상` 배지로 확인합니다.
+
+로컬에서 인증 없이 테스트하려면 `.env`에서 통합 API 키를 비워 둡니다.
+
+```env
+API_KEY=
+```
+
+`API_KEY`가 비어 있지 않으면 데모 화면의 API 키 입력란에 서버와 동일한 키를 입력해야 합니다. 키는 브라우저에 저장하지 않습니다.

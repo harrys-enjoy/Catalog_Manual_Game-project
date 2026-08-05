@@ -78,3 +78,40 @@ test('QWEN_BASE_URL도 OpenAI 호환 모델 endpoint로 사용한다', async () 
   await adapter.generate({ system: '규칙', question: '질문', evidence: [] });
   assert.equal(calledUrl, 'https://integrate.api.nvidia.com/v1/chat/completions');
 });
+test('모델 endpoint 오류는 upstream 상태와 본문을 보존한다', async () => {
+  const adapter = createModelAdapterFromEnv({
+    env: { MODEL_NAME: 'meta/llama-3.3-70b-instruct', MODEL_BASE_URL: 'https://nvidia.example/v1', MODEL_API_KEY: 'test-key' },
+    fetchImpl: async () => new Response(JSON.stringify({ detail: 'model unavailable' }), { status: 410 }),
+  });
+
+  await assert.rejects(
+    () => adapter.generate({ system: 'guide', question: 'question', evidence: [] }),
+    (error) => error.code === 'MODEL_UNAVAILABLE'
+      && error.statusCode === 503
+      && error.message.includes('HTTP 410')
+      && error.message.includes('model unavailable'),
+  );
+});
+
+test('LLM 네트워크 오류는 원인 코드와 대상 주소를 보존한다', async () => {
+  const adapter = createModelAdapterFromEnv({
+    env: { MODEL_NAME: 'meta/llama-3.3-70b-instruct', MODEL_BASE_URL: 'https://nvidia.example/v1', MODEL_API_KEY: 'test-key' },
+    fetchImpl: async () => {
+      const error = new Error('fetch failed');
+      error.cause = {
+        code: 'EACCES',
+        message: 'connect failed',
+        errors: [{ code: 'EACCES', address: '99.83.136.103', port: 443 }],
+      };
+      throw error;
+    },
+  });
+
+  await assert.rejects(
+    () => adapter.generate({ system: 'guide', question: 'question', evidence: [] }),
+    (error) => error.code === 'MODEL_UNAVAILABLE'
+      && error.message.includes('EACCES')
+      && error.message.includes('99.83.136.103:443')
+      && error.message.includes('connect failed'),
+  );
+});

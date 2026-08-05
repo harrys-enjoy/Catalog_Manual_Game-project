@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Game Q&A Demo</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script type="module" src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">LOCAL DEVELOPMENT DEMO</p>
+          <h1>Game Q&amp;A</h1>
+          <p class="subtitle">현재 구현된 카탈로그·도감·세계관 Q&amp;A를 연결 전에 확인합니다.</p>
+        </div>
+        <div id="health-status" class="status status-pending" aria-live="polite">상태 확인 중</div>
+      </header>
+
+      <section class="panel setup-panel" aria-labelledby="setup-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">TEST SETTINGS</p>
+            <h2 id="setup-title">질문 설정</h2>
+          </div>
+          <span class="local-only">외부 서비스 미연결</span>
+        </div>
+        <div class="form-grid">
+          <label>
+            질문 모드
+            <select id="mode">
+              <option value="dev-guide">기획·아트 가이드</option>
+              <option value="catalog">게임 카탈로그</option>
+              <option value="codex">게임 도감</option>
+              <option value="lore">세계관 Q&amp;A</option>
+            </select>
+          </label>
+          <label>
+            언어
+            <select id="locale">
+              <option value="ko">한국어</option>
+              <option value="en">English</option>
+              <option value="ja">日本語</option>
+              <option value="zh-CN">简体中文</option>
+            </select>
+          </label>
+          <label>
+            API 키 <span class="muted">(선택)</span>
+            <input id="api-key" type="password" autocomplete="off" placeholder="API_KEY가 설정된 경우 입력">
+          </label>
+        </div>
+      </section>
+
+      <section class="panel question-panel" aria-labelledby="question-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ASK THE GAME AGENT</p>
+            <h2 id="question-title">무엇이 궁금한가요?</h2>
+          </div>
+          <span id="mode-hint" class="muted">기획·아트 가이드</span>
+        </div>
+        <textarea id="question" rows="4" placeholder="예: 이 게임의 핵심 세계관을 간단히 설명해줘"></textarea>
+        <div class="suggestion-row">
+          <span class="muted">추천 질문</span>
+          <div id="suggestions" class="suggestions" aria-live="polite"></div>
+        </div>
+        <div class="actions">
+          <p class="muted">질문은 현재 로컬 API의 <code>/api/ask</code>로 전송됩니다.</p>
+          <button id="send" type="button">질문 보내기</button>
+        </div>
+      </section>
+
+      <section class="content-toolbar">
+        <button id="toggle-content" class="secondary" type="button">전체 콘텐츠 보기</button>
+      </section>
+
+      <section id="full-content" class="panel content-panel" hidden aria-labelledby="content-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">CONTENT LIBRARY</p>
+            <h2 id="content-title">전체 콘텐츠</h2>
+          </div>
+          <span id="content-meta" class="muted"></span>
+        </div>
+        <div id="content-list" class="content-list"></div>
+      </section>
+
+      <section id="error" class="notice error" hidden aria-live="assertive"></section>
+
+      <section id="response" class="panel response-panel" aria-labelledby="response-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">AGENT RESPONSE</p>
+            <h2 id="response-title">응답 대기 중</h2>
+          </div>
+          <span id="response-meta" class="muted">아직 질문을 보내지 않았습니다.</span>
+        </div>
+        <div id="answer" class="answer empty">질문을 보내면 답변이 여기에 표시됩니다.</div>
+        <div id="details" class="details" hidden>
+          <div><span>에이전트</span><strong id="agent">-</strong></div>
+          <div><span>신뢰도</span><strong id="confidence">-</strong></div>
+          <div><span>출처</span><strong id="sources">-</strong></div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

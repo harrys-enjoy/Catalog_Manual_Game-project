@@ -41,6 +41,7 @@ export function toAgentRequest(body) {
       ? message.messageId.trim()
       : createRequestId(),
     mode: metadata.mode ?? 'dev-guide',
+    locale: metadata.locale ?? 'ko',
     question: message.parts.map((part) => part.text).join('\n'),
     context,
     evidence: metadata.evidence ?? [],
