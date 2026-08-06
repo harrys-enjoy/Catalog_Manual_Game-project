@@ -6,8 +6,9 @@ import { toAgentRequest, toSendMessageResponse } from './a2a-http.js';
 import { createAgentCard } from './agent-card.js';
 import { createAgentRegistry } from './agents.js';
 import { AppError } from './errors.js';
-import { listKnowledge, listSources, lookupKnowledge } from './knowledge.js';
+import { listKnowledge, listSources, lookupKnowledge, lookupKnowledgeBest } from './knowledge.js';
 import { createModelAdapterFromEnv } from './model-factory.js';
+import { MockModelAdapter } from './model.js';
 import { createOrchestrator } from './orchestrator.js';
 import { createRequestId, parseJsonBody, validateAgentRequest, validateAskRequest } from './request.js';
 import { loadEnvFile } from './config.js';
@@ -76,7 +77,12 @@ function readBody(request) {
   });
 }
 
-export function createDefaultOrchestrator({ modelAdapter = createModelAdapterFromEnv(), remoteAgents = {} } = {}) {
+export function isModelEnabled(env = process.env) {
+  return String(env.MODEL_ENABLED ?? 'false').toLowerCase() === 'true';
+}
+
+export function createDefaultOrchestrator({ modelAdapter, remoteAgents = {} } = {}) {
+  modelAdapter ??= isModelEnabled() ? createModelAdapterFromEnv() : new MockModelAdapter();
   const agents = createAgentRegistry({ modelAdapter });
   for (const [agentName, target] of Object.entries(remoteAgents)) {
     const agent = typeof target === 'string'
@@ -86,6 +92,8 @@ export function createDefaultOrchestrator({ modelAdapter = createModelAdapterFro
   }
   return createOrchestrator({
     lookup: lookupKnowledge,
+    lookupBest: lookupKnowledgeBest,
+    listKnowledge,
     agents,
   });
 }

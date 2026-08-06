@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { listKnowledge, lookupKnowledge, validateKnowledgeSources } from '../src/knowledge.js';
+import { listKnowledge, lookupKnowledge, lookupKnowledgeBest, validateKnowledgeSources } from '../src/knowledge.js';
 
 test('출처가 있는 지식 항목은 CC0 출처를 참조해야 한다', () => {
   assert.throws(
@@ -59,6 +59,12 @@ test('codex 질문은 모델 없이 도감 데이터를 반환한다', () => {
   const result = lookupKnowledge('codex', '루멘의 약점은 무엇인가?');
   assert.equal(result.answer, '루멘의 약점은 냉기 속성입니다.');
   assert.deepEqual(result.sources, ['codex:lumens']);
+});
+
+test('일반 질문은 공통 키워드보다 정확한 catalog·codex 항목명을 우선한다', () => {
+  assert.equal(lookupKnowledgeBest('잿불 등불').sources[0], 'codex:ash-lantern');
+  assert.equal(lookupKnowledgeBest('항로 나침반').sources[0], 'codex:route-compass');
+  assert.equal(lookupKnowledgeBest('잿불 마을').sources[0], 'catalog:ember-village');
 });
 
 test('자료가 없는 질문은 null을 반환한다', () => {

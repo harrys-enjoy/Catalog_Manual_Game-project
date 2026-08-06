@@ -97,3 +97,25 @@ export function lookupKnowledge(mode, question, locale = 'ko') {
   if (sourceUrl) sources.push(sourceUrl);
   return { answer: localized.answer, sources };
 }
+
+export function lookupKnowledgeBest(question, locale = 'ko') {
+  const normalizedQuestion = normalizeSearchText(question);
+  const modes = ['lore', 'catalog', 'codex'];
+  let best = null;
+
+  for (const mode of modes) {
+    for (const entry of mergedKnowledge[mode] ?? []) {
+      const localized = localizedEntry(entry, locale);
+      const terms = [localized.name, ...localized.keywords, entry.name, ...entry.keywords]
+        .map(normalizeSearchText)
+        .filter(Boolean);
+      const matchedLength = Math.max(...terms.filter((term) => normalizedQuestion.includes(term)).map((term) => term.length), 0);
+      if (matchedLength === 0) continue;
+      const exact = terms.some((term) => term === normalizedQuestion);
+      const score = (exact ? 100_000 : 0) + matchedLength;
+      if (!best || score > best.score) best = { mode, name: localized.name, score };
+    }
+  }
+
+  return best ? { ...lookupKnowledge(best.mode, best.name, locale), mode: best.mode } : null;
+}

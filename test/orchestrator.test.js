@@ -4,6 +4,35 @@ import { createAgentRegistry } from '../src/agents.js';
 import { MockModelAdapter } from '../src/model.js';
 import { createOrchestrator } from '../src/orchestrator.js';
 
+test('catalog과 codex의 일반 조회는 일치 항목이 없어도 로컬 목록을 반환한다', async () => {
+  const orchestrator = createOrchestrator({
+    lookup: () => null,
+    listKnowledge: (mode) => [{ id: `${mode}-entry`, name: '루멘', keywords: ['루멘'] }],
+    agents: new Map(),
+  });
+  const result = await orchestrator.ask({
+    requestId: 'req_list', mode: 'codex', question: '도감에서 관련 캐릭터, 몬스터, 아이템을 찾아줘', context: {},
+  });
+  assert.equal(result.agent, 'knowledge');
+  assert.match(result.answer, /루멘/);
+});
+
+test('일반 lore 질문은 catalog과 codex까지 확장 검색한다', async () => {
+  const orchestrator = createOrchestrator({
+    lookup: (mode) => mode === 'codex'
+      ? { answer: '별의 파편 설명', sources: ['codex:star-shard'] }
+      : null,
+    listKnowledge: () => [],
+    agents: new Map(),
+  });
+  const result = await orchestrator.ask({
+    requestId: 'req_cross_mode', mode: 'lore', question: '별의 파편', context: {},
+  });
+  assert.equal(result.agent, 'knowledge');
+  assert.equal(result.mode, 'codex');
+  assert.equal(result.answer, '[Source: Codex (characters / monsters / items)]\n별의 파편 설명');
+});
+
 test('isolates lore cache entries by A2A contextId', async () => {
   let calls = 0;
   const orchestrator = createOrchestrator({

@@ -8,6 +8,19 @@ function selectDevGuideAgent(question) {
     : 'art-guide';
 }
 
+function sourceLabel(mode) {
+  return {
+    'dev-guide': 'Source: Guide (planning / art)',
+    lore: 'Source: World Lore',
+    catalog: 'Source: Catalog (game content)',
+    codex: 'Source: Codex (characters / monsters / items)',
+  }[mode] ?? 'Source: Game Q&A';
+}
+
+function withSourceLabel(answer, mode) {
+  return `[${sourceLabel(mode)}]\n${answer}`;
+}
+
 function cacheKey(request) {
   const context = request.context ?? {};
   return JSON.stringify([
@@ -22,7 +35,7 @@ function cacheKey(request) {
   ]);
 }
 
-export function createOrchestrator({ agents, lookup, cacheTtlMs = 60_000, cacheMaxEntries = 100 }) {
+export function createOrchestrator({ agents, lookup, lookupBest = null, listKnowledge = null, cacheTtlMs = 60_000, cacheMaxEntries = 100 }) {
   const cache = new Map();
   const metrics = { cacheHits: 0, directKnowledgeResponses: 0, agentCalls: 0 };
 
@@ -50,12 +63,15 @@ export function createOrchestrator({ agents, lookup, cacheTtlMs = 60_000, cacheM
       const cached = readCache(request);
       if (cached) return cached;
 
-      const direct = lookup(request.mode, request.question, request.locale ?? 'ko');
+      const direct = request.mode === 'lore' && typeof lookupBest === 'function'
+        ? lookupBest(request.question, request.locale ?? 'ko')
+        : lookup(request.mode, request.question, request.locale ?? 'ko');
       if (direct) {
+        const directMode = direct.mode ?? request.mode;
         metrics.directKnowledgeResponses += 1;
         const response = {
-          answer: direct.answer,
-          mode: request.mode,
+          answer: withSourceLabel(direct.answer, directMode),
+          mode: directMode,
           agent: 'knowledge',
           sources: direct.sources,
           usage: null,
@@ -65,7 +81,39 @@ export function createOrchestrator({ agents, lookup, cacheTtlMs = 60_000, cacheM
         return response;
       }
 
+      if (request.mode === 'lore' && typeof listKnowledge === 'function') {
+        for (const fallbackMode of ['catalog', 'codex']) {
+          const fallback = lookup(fallbackMode, request.question, request.locale ?? 'ko');
+          if (fallback) {
+            metrics.directKnowledgeResponses += 1;
+            const response = {
+              answer: withSourceLabel(fallback.answer, fallbackMode),
+              mode: fallbackMode,
+              agent: 'knowledge',
+              sources: fallback.sources,
+              usage: null,
+              requestId: request.requestId,
+            };
+            writeCache(request, response);
+            return response;
+          }
+        }
+      }
+
       if (request.mode === 'catalog' || request.mode === 'codex') {
+        if (typeof listKnowledge === 'function') {
+          const entries = listKnowledge(request.mode, { full: false, locale: request.locale ?? 'ko' }).slice(0, 12);
+          return {
+            answer: entries.length > 0
+              ? `${request.mode === 'codex' ? '도감' : '카탈로그'}에서 현재 확인 가능한 항목입니다.\n\n${entries.map((entry) => `- ${entry.name}: ${entry.keywords.join(', ')}`).join('\n')}`
+              : '현재 등록된 게임 자료가 없습니다.',
+            mode: request.mode,
+            agent: 'knowledge',
+            sources: entries.map((entry) => `${request.mode}:${entry.id}`),
+            usage: null,
+            requestId: request.requestId,
+          };
+        }
         throw new AppError('KNOWLEDGE_NOT_FOUND', '요청과 일치하는 게임 자료를 찾지 못했습니다.', 404);
       }
 
