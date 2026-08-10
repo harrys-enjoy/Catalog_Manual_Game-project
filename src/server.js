@@ -6,12 +6,13 @@ import { toAgentRequest, toSendMessageResponse } from './a2a-http.js';
 import { createAgentCard } from './agent-card.js';
 import { createAgentRegistry } from './agents.js';
 import { AppError } from './errors.js';
-import { listKnowledge, listSources, lookupKnowledge, lookupKnowledgeBest } from './knowledge.js';
+import { appendReviewedStory, listKnowledge, listSources, lookupKnowledge, lookupKnowledgeBest } from './knowledge.js';
 import { createModelAdapterFromEnv } from './model-factory.js';
 import { MockModelAdapter } from './model.js';
 import { createOrchestrator } from './orchestrator.js';
 import { createRequestId, parseJsonBody, validateAgentRequest, validateAskRequest } from './request.js';
 import { loadEnvFile } from './config.js';
+import { createStoryReviewService } from './story-review.js';
 
 loadEnvFile();
 
@@ -98,8 +99,14 @@ export function createDefaultOrchestrator({ modelAdapter, remoteAgents = {} } = 
   });
 }
 
-export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, corsOrigin = process.env.CORS_ORIGIN || '', apiKey = process.env.API_KEY || '', publicUrl = process.env.AGENT_PUBLIC_URL || 'http://localhost:3000' } = {}) {
+export function createServer({ orchestrator, modelAdapter, storyReviewService, remoteAgents = {}, corsOrigin = process.env.CORS_ORIGIN || '', apiKey = process.env.API_KEY || '', publicUrl = process.env.AGENT_PUBLIC_URL || 'http://localhost:3000' } = {}) {
+  modelAdapter ??= isModelEnabled() ? createModelAdapterFromEnv() : new MockModelAdapter();
   orchestrator ??= createDefaultOrchestrator({ modelAdapter, remoteAgents });
+  storyReviewService ??= createStoryReviewService({
+    modelAdapter,
+    listKnowledge,
+    onApproved: appendReviewedStory,
+  });
   if (!orchestrator || typeof orchestrator.ask !== 'function') {
     throw new TypeError('orchestrator.ask가 필요합니다.');
   }
@@ -108,7 +115,7 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, co
     const requestId = createRequestId();
     const headers = corsHeaders(request, corsOrigin);
     try {
-      if (request.method === 'OPTIONS' && ['/api/ask', '/a2a', '/message:send'].includes(request.url) && Object.keys(headers).length > 0) {
+      if (request.method === 'OPTIONS' && ['/api/ask', '/a2a', '/message:send', '/api/story-review', '/api/story-approve'].includes(request.url) && Object.keys(headers).length > 0) {
         response.writeHead(204, headers);
         response.end();
         return;
@@ -158,16 +165,26 @@ export function createServer({ orchestrator, modelAdapter, remoteAgents = {}, co
         writeJson(response, 200, card, cardHeaders);
         return;
       }
-      if (apiKey && ['/api/ask', '/a2a', '/message:send'].includes(request.url) && request.headers.authorization !== `Bearer ${apiKey}`) {
+      if (apiKey && ['/api/ask', '/a2a', '/message:send', '/api/story-review', '/api/story-approve'].includes(request.url) && request.headers.authorization !== `Bearer ${apiKey}`) {
         throw new AppError('UNAUTHORIZED', '유효한 Bearer 인증이 필요합니다.', 401);
       }
       const isAskRequest = request.method === 'POST' && request.url === '/api/ask';
       const isA2ARequest = request.method === 'POST' && request.url === '/a2a';
       const isA2AHttpRequest = request.method === 'POST' && request.url === '/message:send';
-      if (!isAskRequest && !isA2ARequest && !isA2AHttpRequest) {
+      const isStoryReviewRequest = request.method === 'POST' && request.url === '/api/story-review';
+      const isStoryApproveRequest = request.method === 'POST' && request.url === '/api/story-approve';
+      if (!isAskRequest && !isA2ARequest && !isA2AHttpRequest && !isStoryReviewRequest && !isStoryApproveRequest) {
         throw new AppError('INTERNAL_ERROR', '요청 경로를 찾을 수 없습니다.', 404);
       }
       const parsed = parseJsonBody(await readBody(request));
+      if (isStoryReviewRequest) {
+        writeJson(response, 200, await storyReviewService.review(parsed), headers);
+        return;
+      }
+      if (isStoryApproveRequest) {
+        writeJson(response, 200, storyReviewService.approve(parsed.reviewId, parsed.draft), headers);
+        return;
+      }
       const body = isA2AHttpRequest
         ? toAgentRequest(parsed)
         : isA2ARequest ? validateAgentRequest(parsed) : validateAskRequest(parsed);

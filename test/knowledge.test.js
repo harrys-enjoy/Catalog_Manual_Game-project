@@ -2,6 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { listKnowledge, lookupKnowledge, lookupKnowledgeBest, validateKnowledgeSources } from '../src/knowledge.js';
 
+test('세계관 일반 질문은 전체 설정 요약을 반환한다', () => {
+  const result = lookupKnowledge('lore', '세계관');
+  assert.equal(result.sources[0], 'lore:overview');
+  assert.match(result.answer, /유리별/);
+});
+
 test('출처가 있는 지식 항목은 CC0 출처를 참조해야 한다', () => {
   assert.throws(
     () => validateKnowledgeSources(

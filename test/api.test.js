@@ -172,6 +172,28 @@ test('lore API는 전우치와 홍길동의 신념 대립을 반환한다', asyn
   assert.match(body.answer, /홍길동/);
 });
 
+test('스토리 검토 API는 검토 결과만 반환하고 저장하지 않는다', async () => {
+  const server = createServer({
+    storyReviewService: {
+      review: async (draft) => ({ reviewId: 'review-test', verdict: 'review_required', draft, approvalRequired: true }),
+      approve: async () => ({ status: 'saved' }),
+    },
+    orchestrator: { ask: async () => ({}) },
+  }).listen(0);
+  await once(server, 'listening');
+  const { port } = server.address();
+  const response = await fetch(`http://127.0.0.1:${port}/api/story-review`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ name: '새 이야기', keywords: ['새 이야기'], answer: '본문' }),
+  });
+  const body = await response.json();
+  server.close();
+  assert.equal(response.status, 200);
+  assert.equal(body.reviewId, 'review-test');
+  assert.equal(body.approvalRequired, true);
+});
+
 test('POST /api/ask는 locale에 맞는 lore 답변을 반환한다', async () => {
   const server = createServer().listen(0);
   await once(server, 'listening');
