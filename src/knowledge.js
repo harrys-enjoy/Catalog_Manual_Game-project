@@ -97,16 +97,16 @@ export function listKnowledge(mode, { full = false, locale = 'ko' } = {}) {
 
 export function lookupKnowledge(mode, question, locale = 'ko') {
   const normalizedQuestion = normalizeSearchText(question);
-  if (mode === 'lore' && loreOverviewTerms.some((term) => normalizedQuestion === term || normalizedQuestion.includes(term))) {
-    return loreOverview;
-  }
   const entries = mergedKnowledge[mode] ?? [];
   const item = entries.find((entry) => {
     const localized = localizedEntry(entry, locale);
     return [localized.name, ...localized.keywords, entry.name, ...entry.keywords]
       .some((term) => normalizedQuestion.includes(normalizeSearchText(term)));
   });
-  if (!item) return null;
+  if (!item) {
+    if (mode === 'lore' && loreOverviewTerms.some((term) => normalizedQuestion === term || normalizedQuestion.includes(term))) return loreOverview;
+    return null;
+  }
   const localized = localizedEntry(item, locale);
   const sourceUrl = sourceById.get(item.sourceRef)?.sourceUrl;
   const sources = [`${mode}:${item.id}`];
@@ -121,8 +121,6 @@ export function appendReviewedStory(entry) {
 }
 
 export function lookupKnowledgeBest(question, locale = 'ko') {
-  const overview = lookupKnowledge('lore', question, locale);
-  if (overview?.sources?.[0] === 'lore:overview') return overview;
   const normalizedQuestion = normalizeSearchText(question);
   const modes = ['lore', 'catalog', 'codex'];
   let best = null;
@@ -141,5 +139,7 @@ export function lookupKnowledgeBest(question, locale = 'ko') {
     }
   }
 
-  return best ? { ...lookupKnowledge(best.mode, best.name, locale), mode: best.mode } : null;
+  if (best) return { ...lookupKnowledge(best.mode, best.name, locale), mode: best.mode };
+  const overview = lookupKnowledge('lore', question, locale);
+  return overview?.sources?.[0] === 'lore:overview' ? overview : null;
 }

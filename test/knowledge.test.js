@@ -8,6 +8,11 @@ test('세계관 일반 질문은 전체 설정 요약을 반환한다', () => {
   assert.match(result.answer, /유리별/);
 });
 
+test('구체적인 스토리 요청은 일반 세계관 요약보다 관련 설정을 우선한다', () => {
+  const result = lookupKnowledge('lore', '유리별의 빛과 기억의 항로 스토리');
+  assert.notEqual(result.sources[0], 'lore:overview');
+});
+
 test('출처가 있는 지식 항목은 CC0 출처를 참조해야 한다', () => {
   assert.throws(
     () => validateKnowledgeSources(
