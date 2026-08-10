@@ -98,11 +98,19 @@ export function listKnowledge(mode, { full = false, locale = 'ko' } = {}) {
 export function lookupKnowledge(mode, question, locale = 'ko') {
   const normalizedQuestion = normalizeSearchText(question);
   const entries = mergedKnowledge[mode] ?? [];
-  const item = entries.find((entry) => {
+  let item = null;
+  let bestMatchLength = 0;
+  for (const entry of entries) {
     const localized = localizedEntry(entry, locale);
-    return [localized.name, ...localized.keywords, entry.name, ...entry.keywords]
-      .some((term) => normalizedQuestion.includes(normalizeSearchText(term)));
-  });
+    const matchedLength = Math.max(...[localized.name, ...localized.keywords, entry.name, ...entry.keywords]
+      .map((term) => normalizeSearchText(term))
+      .filter((term) => term && normalizedQuestion.includes(term))
+      .map((term) => term.length), 0);
+    if (matchedLength > bestMatchLength) {
+      item = entry;
+      bestMatchLength = matchedLength;
+    }
+  }
   if (!item) {
     if (mode === 'lore' && loreOverviewTerms.some((term) => normalizedQuestion === term || normalizedQuestion.includes(term))) return loreOverview;
     return null;
