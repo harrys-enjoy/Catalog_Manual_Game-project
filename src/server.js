@@ -100,6 +100,7 @@ export function createDefaultOrchestrator({ modelAdapter, remoteAgents = {} } = 
 }
 
 export function createServer({ orchestrator, modelAdapter, storyReviewService, remoteAgents = {}, corsOrigin = process.env.CORS_ORIGIN || '', apiKey = process.env.API_KEY || '', publicUrl = process.env.AGENT_PUBLIC_URL || 'http://localhost:3000' } = {}) {
+  const hasInjectedOrchestrator = Boolean(orchestrator);
   modelAdapter ??= isModelEnabled() ? createModelAdapterFromEnv() : new MockModelAdapter();
   orchestrator ??= createDefaultOrchestrator({ modelAdapter, remoteAgents });
   storyReviewService ??= createStoryReviewService({
@@ -177,6 +178,22 @@ export function createServer({ orchestrator, modelAdapter, storyReviewService, r
         throw new AppError('INTERNAL_ERROR', '요청 경로를 찾을 수 없습니다.', 404);
       }
       const parsed = parseJsonBody(await readBody(request));
+      const mainAgentUrl = !hasInjectedOrchestrator && process.env.MAIN_AGENT_URL;
+      if (isAskRequest && mainAgentUrl) {
+        let mainResponse;
+        try {
+          mainResponse = await fetch(`${mainAgentUrl.replace(/\/$/, '')}/api/chats/Game%20Q%26A/reply`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ content: parsed.question }),
+          });
+        } catch {
+          throw new AppError('MODEL_UNAVAILABLE', 'Main 라우터에 연결할 수 없습니다.', 503);
+        }
+        if (!mainResponse.ok) throw new AppError('MODEL_UNAVAILABLE', 'Main 라우터가 요청을 처리하지 못했습니다.', 503);
+        writeJson(response, 200, await mainResponse.json(), headers);
+        return;
+      }
       if (isStoryReviewRequest) {
         writeJson(response, 200, await storyReviewService.review(parsed), headers);
         return;

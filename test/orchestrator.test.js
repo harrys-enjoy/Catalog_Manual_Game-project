@@ -17,6 +17,77 @@ test('catalog과 codex의 일반 조회는 일치 항목이 없어도 로컬 목
   assert.match(result.answer, /루멘/);
 });
 
+test('/art 요청은 스토리 근거를 보존한 Video Agent로 라우팅한다', async () => {
+  let received;
+  const orchestrator = createOrchestrator({
+    lookup: () => ({ answer: '지식 검색 결과', sources: [] }),
+    agents: new Map([
+      ['video-prompt-guide', { ask: async (request) => {
+        received = request;
+        return { answer: '영상 프롬프트', agent: 'video-prompt-guide', sources: request.evidence, usage: null };
+      } }],
+    ]),
+  });
+
+  const result = await orchestrator.ask({
+    requestId: 'req_art',
+    mode: 'dev-guide',
+    question: '/art 폐허 도시에서 석궁을 준비하는 정찰병 영상 프롬프트',
+    context: { storyReview: 'pass', character: '은회색 단발과 청록색 눈' },
+    evidence: ['스토리 검토 통과: 캐릭터 외형과 행동 일관성 확인'],
+  });
+
+  assert.equal(result.agent, 'video-prompt-guide');
+  assert.equal(received.context.storyReview, 'pass');
+  assert.match(received.evidence[0], /일관성/);
+});
+
+test('/? video 명령도 Video Agent로 라우팅한다', async () => {
+  const called = [];
+  const orchestrator = createOrchestrator({
+    lookup: () => ({ answer: '지식 검색 결과', sources: [] }),
+    agents: new Map([
+      ['video-prompt-guide', { ask: async () => {
+        called.push('video-prompt-guide');
+        return { answer: '영상 프롬프트', agent: 'video-prompt-guide', sources: [], usage: null };
+      } }],
+    ]),
+  });
+
+  const result = await orchestrator.ask({
+    requestId: 'req_video_alias',
+    mode: 'dev-guide',
+    question: '/? video 캐릭터 등장 장면 프롬프트',
+    context: {},
+  });
+
+  assert.equal(result.agent, 'video-prompt-guide');
+  assert.deepEqual(called, ['video-prompt-guide']);
+});
+
+test('Video Agent는 영상 생성 프롬프트 구성 요소를 모델 지침으로 받는다', async () => {
+  let generated;
+  const registry = createAgentRegistry({
+    modelAdapter: {
+      async generate(input) {
+        generated = input;
+        return { answer: 'prompt', usage: null };
+      },
+    },
+  });
+
+  await registry.get('video-prompt-guide').ask({
+    question: '/art 장면을 영상 프롬프트로 변환',
+    context: { storyReview: 'pass' },
+    evidence: ['캐릭터 외형: 은회색 단발'],
+  });
+
+  assert.match(generated.system, /카메라/);
+  assert.match(generated.system, /일관성/);
+  assert.match(generated.question, /storyReview/);
+  assert.match(generated.evidence[0], /은회색/);
+});
+
 test('일반 lore 질문은 catalog과 codex까지 확장 검색한다', async () => {
   const orchestrator = createOrchestrator({
     lookup: (mode) => mode === 'codex'
@@ -136,6 +207,24 @@ test('같은 질문은 TTL 동안 에이전트를 다시 호출하지 않는다'
   assert.equal(calls, 1);
   assert.equal(first.requestId, 'req_1');
   assert.equal(second.requestId, 'req_2');
+});
+
+test('/art 인물 요청은 Lore 근거를 Video Prompt Guide에 함께 전달한다', async () => {
+  let received;
+  const orchestrator = createOrchestrator({
+    lookup: () => null,
+    lookupBest: (question) => question.includes('홍길동')
+      ? { answer: '홍길동은 불평등한 질서에 맞서는 공동체 지향 인물이다.', sources: ['lore:hong-gildong'], mode: 'lore' }
+      : null,
+    agents: new Map([['video-prompt-guide', { ask: async (request) => {
+      received = request;
+      return { answer: '홍길동 영상 프롬프트', agent: 'video-prompt-guide', sources: request.evidence, usage: null };
+    } }]]),
+  });
+
+  await orchestrator.ask({ requestId: 'req_hong', mode: 'dev-guide', question: '/art 홍길동', context: {}, evidence: [] });
+
+  assert.match(received.evidence[0], /홍길동은 불평등한 질서/);
 });
 
 test('dev-guide의 기획 질문은 planning-guide로 라우팅한다', async () => {

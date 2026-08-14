@@ -6,6 +6,7 @@ services:
       - .env
     environment:
       PORT: 3000
+      AGENT_PUBLIC_URL: "http://game-qa-agent:3000"
     ports:
       - "${PORT:-3000}:3000"
     restart: unless-stopped

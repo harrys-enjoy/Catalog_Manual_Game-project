@@ -24,6 +24,7 @@ test('Qwen 환경변수로 OpenAI 호환 모델 어댑터를 만든다', async (
   assert.deepEqual(result.usage, { inputTokens: 10, outputTokens: 4 });
   assert.equal(call.url, 'https://qwen.example/v1/chat/completions');
   assert.equal(call.options.headers.authorization, 'Bearer test-key');
+  assert.deepEqual(JSON.parse(call.options.body).response_format, { type: 'json_object' });
 });
 
 test('모델 환경변수가 없으면 Mock 어댑터를 사용한다', () => {

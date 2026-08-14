@@ -2,7 +2,12 @@ import { AppError } from './errors.js';
 
 const planningKeywords = ['기획', '퀘스트', '전투 시스템', '레벨 디자인', '밸런스', '규칙', '스킬 설계'];
 
+function isVideoPromptRequest(question) {
+  return /^(?:\/art|\/\?\s*video)(?:\s|$)/i.test(question.trim());
+}
+
 function selectDevGuideAgent(question) {
+  if (isVideoPromptRequest(question)) return 'video-prompt-guide';
   return planningKeywords.some((keyword) => question.includes(keyword))
     ? 'planning-guide'
     : 'art-guide';
@@ -63,7 +68,9 @@ export function createOrchestrator({ agents, lookup, lookupBest = null, listKnow
       const cached = readCache(request);
       if (cached) return cached;
 
-      const direct = request.mode === 'lore' && typeof lookupBest === 'function'
+      const direct = request.mode === 'dev-guide' && isVideoPromptRequest(request.question)
+        ? null
+        : request.mode === 'lore' && typeof lookupBest === 'function'
         ? lookupBest(request.question, request.locale ?? 'ko')
         : lookup(request.mode, request.question, request.locale ?? 'ko');
       if (direct) {
@@ -125,7 +132,16 @@ export function createOrchestrator({ agents, lookup, lookupBest = null, listKnow
         throw new AppError('INTERNAL_ERROR', `에이전트를 사용할 수 없습니다: ${agentName}`, 500);
       }
       metrics.agentCalls += 1;
-      const result = await agent.ask({ ...request, evidence: request.evidence ?? [] });
+      const videoPrompt = request.mode === 'dev-guide' && isVideoPromptRequest(request.question);
+      const promptTopic = request.question.replace(/^(?:\/art|\/\?\s*video)\s*/i, '').trim();
+      const characterKnowledge = videoPrompt && typeof lookupBest === 'function'
+        ? lookupBest(promptTopic, request.locale ?? 'ko')
+        : null;
+      const evidence = [
+        ...(request.evidence ?? []),
+        ...(characterKnowledge?.answer ? [`스토리·인물 설정 근거:\n${characterKnowledge.answer}`] : []),
+      ];
+      const result = await agent.ask({ ...request, evidence });
       const response = {
         answer: result.answer,
         mode: request.mode,

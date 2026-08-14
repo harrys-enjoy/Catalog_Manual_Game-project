@@ -91,6 +91,24 @@ Content-Type: application/json
 
 `dev-guide`는 모델을 호출하기 전에 질문을 분류합니다. `기획`, `퀘스트`, `전투 시스템`, `레벨 디자인`, `밸런스`, `규칙`, `스킬 설계`가 포함되면 `planning-guide`로, 그 외에는 `art-guide`로 라우팅합니다.
 
+`/art` 또는 `/? video`로 시작하는 `dev-guide` 질문은 `video-prompt-guide`로 라우팅합니다. 이 에이전트는 스토리·캐릭터 근거를 바탕으로 Video Generation에 바로 입력할 수 있는 프롬프트를 작성합니다. 프롬프트에는 캐릭터 고정 외형, 행동, 장소, 카메라, 조명, 영상 길이·비율, 일관성 유지 조건과 부정 조건이 포함됩니다. 실제 영상 생성 API는 호출하지 않습니다.
+
+예시:
+
+```json
+{
+  "mode": "dev-guide",
+  "question": "/art 은회색 단발 정찰병이 화산재가 내리는 폐허 도시에서 석궁을 준비하는 8초 영상 프롬프트를 작성해줘",
+  "context": {
+    "storyReview": "pass",
+    "character": "은회색 단발, 청록색 눈, 검은 경량 갑옷"
+  },
+  "evidence": [
+    "스토리 검토 통과: 캐릭터 외형과 행동 일관성 확인"
+  ]
+}
+```
+
 예시:
 
 ```bash

@@ -14,6 +14,60 @@ const draft = {
   relatedCodexIds: ['yeonhwa-codex'],
 };
 
+test('LLM review extracts JSON when the model wraps it in prose and a code fence', async () => {
+  const service = createStoryReviewService({
+    modelAdapter: {
+      async generate() {
+        return { answer: '검토 결과입니다.\n```json\n{"verdict":"pass","suggestions":[]}\n```' };
+      },
+    },
+    listKnowledge: () => [],
+  });
+
+  const result = await service.review({ name: 'Story', keywords: ['story'], answer: 'A story.' });
+
+  assert.equal(result.verdict, 'pass');
+});
+
+test('LLM review preserves a useful prose review when structured output fails', async () => {
+  const prose = '후인의 목표와 홍길동의 기존 신념이 어떻게 충돌하는지 구체화해 주세요.';
+  const service = createStoryReviewService({
+    modelAdapter: { async generate() { return { answer: prose }; } },
+    listKnowledge: () => [],
+  });
+
+  const result = await service.review({ name: 'Story', keywords: ['story'], answer: 'A story idea.' });
+
+  assert.equal(result.verdict, 'review_required');
+  assert.deepEqual(result.suggestions, [prose]);
+});
+
+test('LLM review converts structured findings into readable messages', async () => {
+  const service = createStoryReviewService({
+    modelAdapter: {
+      async generate() {
+        return { answer: JSON.stringify({ verdict: 'review_required', continuityConflicts: [{ content: '인과관계가 약함', reason: '사건의 원인이 설명되지 않음' }] }) };
+      },
+    },
+    listKnowledge: () => [],
+  });
+
+  const result = await service.review({ name: 'Story', keywords: ['story'], answer: 'A story.' });
+
+  assert.deepEqual(result.continuityConflicts, ['인과관계가 약함 — 사건의 원인이 설명되지 않음']);
+});
+
+test('review required without findings explains that the story needs more detail', async () => {
+  const service = createStoryReviewService({
+    modelAdapter: { async generate() { return { answer: JSON.stringify({ verdict: 'review_required' }) }; } },
+    listKnowledge: () => [],
+  });
+
+  const result = await service.review({ name: 'Story', keywords: ['story'], answer: 'A short idea.' });
+
+  assert.deepEqual(result.suggestions, ['스토리 본문, 사건 인과관계, 캐릭터 목표와 행동을 더 구체적으로 입력해 주세요.']);
+});
+
 test('근거가 부족한 Mock 검토는 review_required이며 승인하지 않는다', async () => {
   const service = createStoryReviewService({
     modelAdapter: new MockModelAdapter(),
@@ -80,4 +134,26 @@ test('approved pass review is persisted', async () => {
   assert.equal(saved.status, 'saved');
   assert.equal(JSON.parse(readFileSync(storyPath, 'utf8')).length, 1);
   assert.equal(saved.entry.approvedInMemory, true);
+});
+
+test('스토리 검토는 Lore 요약이 아니라 RPG 서사 검토 기준을 LLM에 전달한다', async () => {
+  let request;
+  const service = createStoryReviewService({
+    modelAdapter: {
+      async generate(input) {
+        request = input;
+        return { answer: JSON.stringify({ verdict: 'review_required' }) };
+      },
+    },
+    listKnowledge: () => [],
+  });
+
+  await service.review({
+    name: '기억의 문',
+    keywords: ['기억', '문'],
+    answer: '주인공이 봉인된 문을 연다.',
+  });
+
+  assert.match(request.system, /인과관계|타임라인|캐릭터|세력/);
+  assert.match(request.question, /스토리|서사|검토/);
 });

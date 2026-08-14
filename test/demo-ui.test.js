@@ -26,6 +26,8 @@ test('GET /가 로컬 데모 UI HTML을 반환한다', async () => {
   assert.match(html, /send/);
   assert.match(html, /response/);
   assert.match(html, /full-content/);
+  assert.match(html, /story-review-title/);
+  assert.match(html, /review-story/);
 });
 
 test('데모 UI 정적 자산을 반환한다', async () => {
@@ -42,6 +44,12 @@ test('데모 UI 정적 자산을 반환한다', async () => {
   assert.match(scriptText, /relatedLoreIds/);
   assert.match(scriptText, /relatedCodexIds/);
   assert.match(scriptText, /scrollIntoView/);
+  assert.match(scriptText, /api\/story-review/);
+  assert.match(scriptText, /continuityConflicts/);
+  assert.match(scriptText, /스토리 검토/);
+  assert.match(scriptText, /story-review-panel/);
+  assert.match(scriptText, /사용 가능한 명령/);
+  assert.match(scriptText, /스토리 초안과 키워드를/);
 });
 
 test('GET /knowledge?mode=codex가 질문용 항목 목록을 반환한다', async () => {

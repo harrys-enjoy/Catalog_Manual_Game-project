@@ -1,0 +1,11 @@
+graph LR
+  Request["Catalog question\nmode=catalog"] --> API["Main API\nPOST /api/ask"]
+  API --> Orchestrator["Orchestrator"]
+  Orchestrator --> CatalogAgent["Catalog agent\nagent=catalog"]
+  CatalogAgent --> Lookup["Structured lookup\nlookupKnowledge()"]
+  Lookup --> CatalogData["Catalog entries\ndata/knowledge.json"]
+  CatalogData --> Match["Keyword / normalized\ntext matching"]
+  Match --> Answer["Catalog answer\nname · keywords · answer"]
+  Answer --> Sources["Source references\nsourceRef → sources.json"]
+  Sources --> Response["AgentResponse\nanswer · sources · requestId"]
+  Response --> Client["Client / UI"]

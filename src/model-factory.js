@@ -21,7 +21,7 @@ class OpenAICompatibleChatModel {
           authorization: `Bearer ${this.apiKey}`,
         },
         signal: AbortSignal.timeout(this.timeoutMs),
-        body: JSON.stringify({ model: this.modelName, messages, temperature: 0.2, max_tokens: 800 }),
+        body: JSON.stringify({ model: this.modelName, messages, temperature: 0.2, max_tokens: 800, response_format: { type: 'json_object' } }),
       });
     } catch (error) {
       const cause = error?.cause;

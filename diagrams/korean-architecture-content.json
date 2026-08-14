@@ -1,0 +1,21 @@
+{
+  "title": "Game Q&A API / Catalog & Manual (Game project)",
+  "subtitle": "게임 지식·카탈로그·매뉴얼 질의를 처리하는 통합 아키텍처",
+  "user": {"head":"사용자 / 호출 주체", "body":"기획자 · 아티스트 · 개발자\n질문 입력\n답변 확인 및 활용"},
+  "frontend": {"head":"Frontend / Local Demo UI", "body":"public/index.html\npublic/app.js\npublic/styles.css\n질문 입력 · 모드 선택\n답변 · 출처 · 상태 확인"},
+  "routes": {"head":"HTTP API / 정적 파일", "body":"GET /health · /metrics · /sources\nGET /knowledge\nPOST /api/ask · /a2a · /message:send\nLocal Demo UI 정적 파일 제공"},
+  "validation": {"head":"요청 검증 · src/request.js", "body":"JSON 본문 파싱\nmode / question 검증\ncontext: projectId · userId · workContext\nevidence 배열 및 requestId 검증"},
+  "orchestrator": {"head":"Orchestrator · src/orchestrator.js", "body":"캐시 확인 및 응답 단축\nmode 기반 라우팅\n직접 지식 조회 또는 Agent 호출\n호출 수 · 캐시 적중률 메트릭 수집"},
+  "knowledge": {"head":"Knowledge Layer · src/knowledge.js", "body":"키워드 정규화 및 검색\nlookupKnowledge()\nlookupKnowledgeBest()\nlocale 적용 및 출처 연결"},
+  "data": {"head":"지식 데이터 · data/", "body":"knowledge.json\nsources.json\nlore-locales.json · story-locales.json\nstories/*.json"},
+  "agents": {"head":"Local Agent Registry · src/agents.js", "body":"planning-guide · art-guide\ncatalog · codex · lore\n질문 영역별 전문 컨텍스트 구성\n필요 시 원격 Agent로 확장"},
+  "model": {"head":"Model Adapter", "body":"MockModelAdapter\nOpenAI 호환 모델 엔드포인트\nLangChain adapter\n프롬프트 · evidence · 답변 생성"},
+  "cat": {"head":"Cat / Catalog", "body":"catalog 모드 담당\n게임 콘텐츠 목록 · 분류 · 메타데이터\nknowledge.json 직접 조회\nsourceRef로 출처 연결"},
+  "video": {"head":"Video 서비스", "body":"영상 목록 및 재생 정보\nvideoId · asset metadata\nCat 콘텐츠와 연결\n향후 별도 API / 저장소 연동"},
+  "development": {"head":"Development 서비스", "body":"dev-guide 모드 담당\n개발 문서 · 작업 가이드\nplanning-guide와 연동\n프로젝트 컨텍스트 활용"},
+  "workmate": {"head":"WorkMate 서비스", "body":"업무 생산성 및 사용자 맥락\nprojectId · userId · workContext\n브리핑 · 작업 상태 · 업무 연결\n향후 A2A / HTTP 연동"},
+  "a2a": {"head":"External A2A Agents", "body":"Agent Card 조회\nPOST /message:send\nBearer API Key · HTTP+JSON\n외부 지식 · 검증 · 분석 Agent 연동"},
+  "ops": {"head":"Docker / Operations", "body":"Dockerfile · compose.yaml\n/health 상태 확인\n/metrics 운영 지표\n/sources 출처 정보\n로그 · 모니터링 · 배포"},
+  "response": {"head":"응답 계약", "body":"answer · mode · agent\nsources · usage · requestId\nA2A 응답에는 confidence 포함\n오류: INVALID_REQUEST\nKNOWLEDGE_NOT_FOUND · MODEL_UNAVAILABLE"},
+  "flow": ["질문 입력", "HTTP 라우팅", "요청 검증", "캐시·지식 조회", "Agent·Model 호출", "출처 포함 답변"]
+}

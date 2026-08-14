@@ -61,6 +61,10 @@ button:disabled { cursor: wait; opacity: .65; }
 .details span { color: #8996bb; font-size: 12px; }
 .details strong { color: #dce3ff; font-size: 14px; }
 code { color: #c5d0ff; }
+.story-review-result { margin-top: 18px; padding: 16px; border: 1px solid #354469; border-radius: 12px; background: #0e1730; }
+.story-review-result h3 { margin: 0 0 14px; color: #dce3ff; }
+.story-review-result section + section { margin-top: 12px; }
+.story-review-result ul { margin: 5px 0 0; padding-left: 22px; color: #c7d0ee; line-height: 1.6; }
 @media (max-width: 640px) {
   .shell { width: min(100% - 22px, 920px); padding-top: 30px; }
   .hero, .actions { display: grid; }

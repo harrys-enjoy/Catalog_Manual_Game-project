@@ -1,0 +1,16 @@
+graph LR
+  User["User / Team"] --> Main["Main\nAPI Gateway + Orchestrator"]
+  Main --> Cat["Cat / Catalog\ncontent & catalog Q&A"]
+  Main --> Video["Video\nvideo asset / playback service"]
+  Main --> Development["Development\ndev-guide & planning support"]
+  Main --> WorkMate["WorkMate\nproductivity / work context"]
+  Cat --> CatalogStore["Catalog knowledge\ndata/knowledge.json"]
+  Video --> VideoStore["Video metadata / storage"]
+  Development --> DevStore["Development guides\nknowledge + model"]
+  WorkMate --> WorkContext["workContext\nproject · user · task context"]
+  Main --> Shared["Shared contracts\nrequestId · mode · context · evidence"]
+  Shared -.-> Cat
+  Shared -.-> Video
+  Shared -.-> Development
+  Shared -.-> WorkMate
+  Main --> External["External integrations\nA2A / HTTP agents"]

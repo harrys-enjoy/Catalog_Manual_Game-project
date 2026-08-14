@@ -68,14 +68,46 @@ function buildEvidence(draft, listKnowledge) {
 
 function normalizeReview(raw, evidence, usage, reviewId) {
   let parsed;
+  const rawText = String(raw ?? '').trim();
+  const fencedText = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  const objectStart = fencedText.indexOf('{');
+  const objectEnd = fencedText.lastIndexOf('}');
+  const candidates = [
+    fencedText,
+    objectStart >= 0 && objectEnd > objectStart ? fencedText.slice(objectStart, objectEnd + 1) : '',
+  ].filter(Boolean);
   try {
-    parsed = JSON.parse(String(raw).replace(/^```json\s*/i, '').replace(/\s*```$/, '').trim());
+    for (const candidate of candidates) {
+      try {
+        parsed = JSON.parse(candidate);
+        break;
+      } catch {
+        // Try the next JSON candidate when the model added prose around the object.
+      }
+    }
+    if (!parsed) throw new Error('Structured review JSON was not found.');
   } catch {
-    parsed = { verdict: 'review_required', suggestions: ['LLM 검토 결과를 구조화된 JSON으로 해석하지 못했습니다.'] };
+    parsed = {
+      verdict: 'review_required',
+      suggestions: [rawText || '스토리 본문, 사건 인과관계, 캐릭터 목표와 행동을 더 구체적으로 입력해 주세요.'],
+    };
   }
   const arrays = ['continuityConflicts', 'timelineIssues', 'characterConsistency', 'factionConsistency', 'missingRelationships', 'suggestions'];
-  const result = Object.fromEntries(arrays.map((key) => [key, Array.isArray(parsed[key]) ? parsed[key] : []]));
+  const formatFinding = (item) => {
+    if (typeof item === 'string') return item;
+    if (item && typeof item === 'object') {
+      const content = typeof item.content === 'string' ? item.content.trim() : '';
+      const reason = typeof item.reason === 'string' ? item.reason.trim() : '';
+      if (content && reason) return `${content} — ${reason}`;
+      if (content || reason) return content || reason;
+    }
+    return String(item ?? '').trim();
+  };
+  const result = Object.fromEntries(arrays.map((key) => [key, Array.isArray(parsed[key]) ? parsed[key].map(formatFinding).filter(Boolean) : []]));
   const verdict = ['pass', 'review_required', 'reject'].includes(parsed.verdict) ? parsed.verdict : 'review_required';
+  if (verdict === 'review_required' && arrays.every((key) => result[key].length === 0)) {
+    result.suggestions = ['스토리 본문, 사건 인과관계, 캐릭터 목표와 행동을 더 구체적으로 입력해 주세요.'];
+  }
   return { reviewId, verdict, ...result, evidence: evidence.map((item) => item.split('\n', 1)[0]), usage: usage ?? null, approvalRequired: verdict !== 'pass' };
 }
 
@@ -83,6 +115,8 @@ export function createStoryReviewService({ modelAdapter, listKnowledge, storyPat
   if (!modelAdapter || typeof modelAdapter.generate !== 'function') throw new TypeError('modelAdapter.generate가 필요합니다.');
   if (typeof listKnowledge !== 'function') throw new TypeError('listKnowledge가 필요합니다.');
   const reviews = new Map();
+  const rpgReviewSystem = 'RPG 스토리 검토 전문가다. 제공된 근거만 사실로 사용하고 근거 밖의 설정은 추측하지 않는다. 세계관 요약으로 끝내지 말고 사건 인과관계, 타임라인, 캐릭터 목표와 행동 일관성, 세력의 이해관계와 관계 변화, 기존 Lore/Codex와의 설정 충돌, 플레이어가 경험할 갈등과 개선 방향을 검토한다. 반드시 verdict와 continuityConflicts, timelineIssues, characterConsistency, factionConsistency, missingRelationships, suggestions 배열을 가진 JSON만 반환한다.';
+  const rpgReviewQuestion = (draft) => `다음 RPG 스토리 초안을 서사적으로 검토해줘. 각 문제는 초안의 구체적인 내용과 제공된 근거를 연결해 설명하고, 문제가 없으면 빈 배열을 반환해. 검토 대상: 사건 인과관계, 타임라인, 캐릭터 동기와 일관성, 세력 관계, Lore/Codex 설정 충돌, 누락된 관계, 게임 플레이로 발전시킬 수 있는 개선안. 초안:\n${JSON.stringify(draft)}`;
 
   return {
     async review(input) {
@@ -99,6 +133,8 @@ export function createStoryReviewService({ modelAdapter, listKnowledge, storyPat
         question: `다음 스토리 초안의 기존 설정 충돌, 전후관계, 인물·세력 일관성, 누락된 관계를 검토해줘. 초안:\n${JSON.stringify(draft)}`,
         evidence,
         maxOutputChars: 6000,
+        system: rpgReviewSystem,
+        question: rpgReviewQuestion(draft),
       });
       const normalized = normalizeReview(result.answer, evidence, result.usage, reviewId);
       reviews.set(reviewId, { draft, result: normalized, expiresAt: Date.now() + REVIEW_TTL_MS });

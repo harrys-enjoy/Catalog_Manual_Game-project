@@ -26,6 +26,14 @@ const elements = {
   agent: document.querySelector('#agent'),
   confidence: document.querySelector('#confidence'),
   sources: document.querySelector('#sources'),
+  storyName: document.querySelector('#story-name'),
+  storyKeywords: document.querySelector('#story-keywords'),
+  storyAnswer: document.querySelector('#story-answer'),
+  storyLoreIds: document.querySelector('#story-lore-ids'),
+  storyCodexIds: document.querySelector('#story-codex-ids'),
+  reviewStory: document.querySelector('#review-story'),
+  storyReviewResult: document.querySelector('#story-review-result'),
+  storyReviewPanel: document.querySelector('#story-review-panel'),
 };
 
 let pendingContentFocus = null;
@@ -217,6 +225,97 @@ async function ask() {
   }
 }
 
+function splitIds(value) {
+  return value.split(',').map((item) => item.trim()).filter(Boolean);
+}
+
+function renderStoryReview(result) {
+  const sections = [
+    ['연속성 충돌', result.continuityConflicts],
+    ['타임라인 문제', result.timelineIssues],
+    ['캐릭터 일관성', result.characterConsistency],
+    ['세력 일관성', result.factionConsistency],
+    ['누락된 관계', result.missingRelationships],
+    ['개선안', result.suggestions],
+  ];
+  elements.storyReviewResult.hidden = false;
+  elements.storyReviewResult.textContent = '';
+  const verdict = document.createElement('h3');
+  verdict.textContent = `검토 결과: ${result.verdict}`;
+  elements.storyReviewResult.append(verdict);
+  for (const [title, items] of sections) {
+    const section = document.createElement('section');
+    const heading = document.createElement('strong');
+    heading.textContent = title;
+    section.append(heading);
+    const list = document.createElement('ul');
+    for (const item of items ?? []) {
+      const entry = document.createElement('li');
+      entry.textContent = item;
+      list.append(entry);
+    }
+    if (!list.children.length) {
+      const entry = document.createElement('li');
+      entry.textContent = '문제 없음';
+      list.append(entry);
+    }
+    section.append(list);
+    elements.storyReviewResult.append(section);
+  }
+}
+
+async function reviewStory() {
+  const draft = {
+    name: elements.storyName.value.trim(),
+    keywords: splitIds(elements.storyKeywords.value),
+    answer: elements.storyAnswer.value.trim(),
+    relatedLoreIds: splitIds(elements.storyLoreIds.value),
+    relatedCodexIds: splitIds(elements.storyCodexIds.value),
+  };
+  if (!draft.name || !draft.keywords.length || !draft.answer) {
+    showError('스토리 이름, 키워드, 초안을 모두 입력하세요.');
+    return;
+  }
+
+  if (question === '/?') {
+    renderResponse({
+      answer: '사용 가능한 명령\n\n• /art: 스토리·캐릭터 설정을 Video Generation용 영상 프롬프트로 변환합니다.\n• 스토리 검토: 아래 RPG Story Review 영역에서 초안을 입력하고 검토합니다.\n• 일반 질문: 현재 선택한 모드의 게임 자료를 조회합니다.',
+      agent: 'help',
+      sources: [],
+    });
+    elements.storyReviewPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+
+  if (/^(스토리\s*검토|스토리\s*검토해줘|스토리\s*리뷰)$/i.test(question)) {
+    elements.storyReviewPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    elements.storyName.focus();
+    showError('스토리 초안과 키워드를 아래 스토리 검토 영역에 입력한 뒤 검토를 실행하세요.');
+    return;
+  }
+  clearError();
+  elements.reviewStory.disabled = true;
+  elements.reviewStory.textContent = '검토 중...';
+  try {
+    const headers = { 'content-type': 'application/json' };
+    const apiKey = elements.apiKey.value.trim();
+    if (apiKey) headers.authorization = `Bearer ${apiKey}`;
+    const response = await fetch('/api/story-review', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(draft),
+    });
+    const body = await response.json();
+    if (!response.ok) throw new Error(explainError(response, body));
+    renderStoryReview(body);
+  } catch (error) {
+    showError(error.message || '스토리 검토에 실패했습니다.');
+  } finally {
+    elements.reviewStory.disabled = false;
+    elements.reviewStory.textContent = '스토리 검토하기';
+  }
+}
+
 elements.mode.addEventListener('change', () => {
   elements.modeHint.textContent = modeLabels[elements.mode.value];
   loadSuggestions();
@@ -232,6 +331,7 @@ elements.toggleContent.addEventListener('click', () => {
   if (!elements.fullContent.hidden) loadFullContent();
 });
 elements.send.addEventListener('click', ask);
+elements.reviewStory.addEventListener('click', reviewStory);
 elements.question.addEventListener('keydown', (event) => {
   if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) ask();
 });

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="600" viewBox="0 0 1400 600">
+  <style>text{font-family:Arial,"Malgun Gothic",sans-serif;fill:#172033}.box{fill:#eef4ff;stroke:#3b82f6;stroke-width:2;rx:12}.data{fill:#fff7ed;stroke:#f97316;stroke-width:2;rx:12}.sub{fill:#f8fafc;stroke:#64748b;stroke-width:2;rx:12}.line{stroke:#475569;stroke-width:2;fill:none;marker-end:url(#a)}.title{font-size:28px;font-weight:700}.label{font-size:17px;font-weight:700}.small{font-size:14px}</style>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 z" fill="#475569"/></marker></defs>
+  <text x="700" y="45" text-anchor="middle" class="title">Cat / Catalog Architecture</text>
+  <rect x="35" y="250" width="165" height="90" class="sub"/><text x="117" y="285" text-anchor="middle" class="label">Catalog question</text><text x="117" y="312" text-anchor="middle" class="small">mode=catalog</text>
+  <rect x="245" y="250" width="170" height="90" class="box"/><text x="330" y="285" text-anchor="middle" class="label">Main API</text><text x="330" y="312" text-anchor="middle" class="small">POST /api/ask</text>
+  <rect x="460" y="250" width="180" height="90" class="box"/><text x="550" y="285" text-anchor="middle" class="label">Orchestrator</text><text x="550" y="312" text-anchor="middle" class="small">route catalog</text>
+  <rect x="685" y="250" width="180" height="90" class="box"/><text x="775" y="285" text-anchor="middle" class="label">Catalog Agent</text><text x="775" y="312" text-anchor="middle" class="small">agent=catalog</text>
+  <rect x="910" y="145" width="220" height="90" class="data"/><text x="1020" y="180" text-anchor="middle" class="label">Catalog data</text><text x="1020" y="208" text-anchor="middle" class="small">knowledge.json</text>
+  <rect x="910" y="285" width="220" height="90" class="sub"/><text x="1020" y="320" text-anchor="middle" class="label">Normalized matching</text><text x="1020" y="348" text-anchor="middle" class="small">keyword lookup</text>
+  <rect x="910" y="425" width="220" height="90" class="sub"/><text x="1020" y="460" text-anchor="middle" class="label">Sources</text><text x="1020" y="488" text-anchor="middle" class="small">sourceRef → sources.json</text>
+  <rect x="1180" y="250" width="180" height="90" class="box"/><text x="1270" y="285" text-anchor="middle" class="label">AgentResponse</text><text x="1270" y="312" text-anchor="middle" class="small">answer · sources · id</text>
+  <path d="M200 295 H245 M415 295 H460 M640 295 H685 M865 275 C890 245 890 190 910 190 M865 315 H910 M1020 235 V285 M1020 375 V425 M1130 330 H1180" class="line"/>
+</svg>
