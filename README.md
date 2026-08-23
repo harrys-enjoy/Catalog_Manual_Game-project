@@ -1,69 +1,127 @@
-# Game Q&A API
+# Q&A Agent (CAT)
 
-카탈로그·도감·세계관 데이터 작성 규칙은 [`docs/knowledge-authoring.md`](docs/knowledge-authoring.md)에서 확인할 수 있습니다.
+게임의 세계관(Lore), 캐릭터·몬스터·아이템 도감(Codex), 게임 카탈로그와 개발 가이드를 조회하는 독립형 Q&A Agent입니다.
 
-번외편 검색 예시:
+CAT은 게임 지식의 단일 조회 창구이며, A2A 연결과 새 RPG 스토리의 설정 검토·승인 저장을 담당합니다. Main Agent는 UI와 오케스트레이션을 담당합니다.
 
-- `재의 장부가 무엇인가`
-- `무명회는 어떤 세력인가`
-- `전우치 세력은 왜 몰락했는가`
-- `홍길동 세력은 어떻게 해체되었는가`
-- `연화의 최종 선택은 무엇인가`
-
-외부 업무생산성 서비스가 업무 중 게임 제작 정보를 요청할 수 있는 독립형 API입니다.
-
-## 실행
+## 빠른 시작
 
 요구 사항: Node.js 20 이상
 
-## 환경변수
-
-`.env.example`을 복사해 프로젝트 루트에 `.env` 파일을 만들고 서비스 키를 입력합니다. `.env`는 Git에 커밋되지 않습니다.
+### 로컬 실행
 
 ```powershell
 Copy-Item .env.example .env
-```
-
-현재 `API_KEY`, `CORS_ORIGIN`, 원격 agent URL은 서버에 바로 적용됩니다. `MODEL_NAME`, `MODEL_BASE_URL`, `MODEL_API_KEY`가 모두 있으면 기본 서버가 OpenAI 호환 Chat Completions 어댑터를 자동 사용하고, 세 값이 모두 없을 때만 Mock 어댑터로 실행됩니다. 일부만 설정하면 시작 시 설정 오류로 중단됩니다. 모델 키는 클라이언트에 노출하지 않습니다.
-
-Qwen endpoint를 Elice로 교체할 때는 `.env`의 `MODEL_NAME`, `MODEL_BASE_URL`, `MODEL_API_KEY`만 변경하면 됩니다. Elice endpoint가 OpenAI 호환 형식이 아니면 `src/model-factory.js`에 Elice 전용 provider 분기를 추가합니다.
-
-모델 호출 timeout은 기본 30초이며 `MODEL_TIMEOUT_MS`로 조정할 수 있습니다.
-
-```bash
+npm install
 npm test
 npm start
 ```
 
-기본 포트는 `3000`이며 `PORT` 환경변수로 변경할 수 있습니다.
+기본 주소는 `http://127.0.0.1:3000`이며 `PORT` 환경변수로 변경할 수 있습니다.
 
-## Docker 실행
-
-1. `.env.example`을 `.env`로 복사하고 실제 `API_KEY`, `MODEL_API_KEY`를 입력합니다. `.env`는 저장소에 커밋하지 않습니다.
-2. `docker compose up --build -d`로 실행합니다.
-3. `Invoke-RestMethod http://127.0.0.1:3000/health`로 상태를 확인합니다.
-4. 출처 확인은 `Invoke-RestMethod http://127.0.0.1:3000/sources`를 사용합니다.
-5. 중지는 `docker compose down`을 사용합니다.
-
-호스트 포트는 `.env`의 `PORT`로 변경할 수 있으며, 기본값은 `3000`입니다. 실제 모델 키와 API 키는 Dockerfile, Compose 파일, 브라우저 코드에 넣지 않습니다.
-
-## API
-
-연동 상태 확인:
-
-```http
-GET /health
+```powershell
+Invoke-RestMethod http://127.0.0.1:3000/health
 ```
 
-응답: `{"status":"ok","service":"game-qna-api"}`
+### Docker 실행
 
-토큰 절감 경로 확인:
-
-```http
-GET /metrics
+```powershell
+Copy-Item .env.example .env
+docker compose up --build -d
+docker compose ps
+Invoke-RestMethod http://127.0.0.1:3000/health
+docker compose down
 ```
 
-`cacheHits`, `directKnowledgeResponses`, `agentCalls`를 반환합니다. 프로세스 시작 후 누적된 수치이며 질문·사용자·프롬프트 원문은 포함하지 않습니다.
+### Main Agent와 함께 실행
+
+```powershell
+& "C:\Users\희정\Downloads\Nvidia project\Main Agent(docker)\run-local-stack.ps1"
+```
+
+| 서비스 | 주소 |
+| --- | --- |
+| Main API | `http://127.0.0.1:8000` |
+| CAT | `http://127.0.0.1:3010` |
+| Main UI | `http://127.0.0.1:5173` |
+
+바탕화면의 `Main Agent UI` 바로가기도 같은 로컬 스택 실행 스크립트를 사용합니다.
+
+## 환경변수
+
+`.env.example`을 기준으로 `.env`를 작성합니다. `.env`와 서비스 키는 Git에 커밋하지 않습니다.
+
+| 변수 | 용도 |
+| --- | --- |
+| `PORT` | CAT 수신 포트. 기본값 `3000` |
+| `API_KEY` | Q&A·A2A·스토리 검토 API의 Bearer 인증 키 |
+| `CORS_ORIGIN` | 허용할 브라우저 출처 |
+| `MODEL_NAME` | OpenAI 호환 LLM 모델명 |
+| `MODEL_BASE_URL` 또는 `QWEN_BASE_URL` | `/chat/completions`를 제공하는 모델 주소 |
+| `MODEL_API_KEY` | LLM 서비스 인증 키 |
+| `MODEL_TIMEOUT_MS` | LLM 호출 제한 시간. 기본값 `30000` |
+| `AGENT_PUBLIC_URL` | Agent Card에 표시할 CAT 주소 |
+| `LORE_AGENT_URL` | 선택적 원격 Lore Agent 주소 |
+
+`MODEL_NAME`, 모델 Base URL, `MODEL_API_KEY`가 모두 설정되면 OpenAI 호환 LLM을 사용합니다. 세 값이 모두 없으면 Mock으로 실행되고, 일부만 설정하면 설정 오류가 발생합니다.
+
+스토리 검토에서 Mock은 실제 검토를 통과시키지 않고 `review_required`를 반환합니다. 새 스토리를 검토·승인하려면 실제 LLM을 설정해야 합니다.
+
+```env
+MODEL_NAME=meta/llama-3.1-8b-instruct
+QWEN_BASE_URL=https://integrate.api.nvidia.com/v1
+MODEL_API_KEY=your-model-key
+MODEL_TIMEOUT_MS=120000
+```
+
+## 데이터 구조
+
+CAT은 별도 데이터베이스 대신 JSON 파일을 읽습니다.
+
+```text
+data/
+├─ knowledge.json                  # 기본 catalog·codex·lore·dev-guide
+├─ lore-locales.json               # Lore 번역
+├─ story-locales.json              # 스토리 번역
+├─ sources.json                    # 외부 출처·라이선스
+└─ stories/
+   ├─ side-story-ashes-ledger.json # 기존 번외 스토리
+   └─ reviewed-stories.json        # 승인된 신규 스토리
+```
+
+`knowledge.json`의 영역은 `catalog`(지역·아이템·콘텐츠), `codex`(캐릭터·몬스터·용어·아이템), `lore`(역사·인물·세력·사건·지형), `dev-guide`(기획·아트·개발 가이드)입니다.
+
+서버 시작 시 두 스토리 파일의 항목이 `lore`에 병합됩니다. 작성 규칙은 [`docs/knowledge-authoring.md`](docs/knowledge-authoring.md)를 따릅니다.
+
+## 스토리 작성 및 검토 정책
+
+RPG 스토리는 기존 설정과의 충돌을 확인한 뒤 반영합니다.
+
+```text
+스토리 초안 작성
+  ↓
+Main UI의 Game Q&A → + Add story
+  ↓
+CAT 스토리 검토 API
+  ↓
+LLM 검토: 인과관계·타임라인·인물·세력·Lore/Codex 충돌 확인
+  ↓
+검토 결과 확인
+  ↓
+사용자 승인
+  ↓
+data/stories/reviewed-stories.json 저장
+```
+
+검토 항목은 사건 인과관계, 타임라인, 캐릭터 목표와 행동, 세력 이해관계와 관계 변화, 기존 Lore·Codex 충돌, 누락 관계, 게임 플레이 확장안입니다.
+
+검토 중인 초안은 서버 메모리에 약 30분간만 보관됩니다. 서버가 재시작되면 승인되지 않은 초안은 사라지고, 승인된 항목만 `reviewed-stories.json`에 기록됩니다.
+
+이미 편집자가 확정한 초기 설정은 데이터 파일에 직접 포함될 수 있지만, 이후 추가되는 스토리는 반드시 검토 결과를 확인한 뒤 반영합니다.
+
+## HTTP API
+
+### 기본 Q&A
 
 ```http
 POST /api/ask
@@ -72,162 +130,101 @@ Content-Type: application/json
 
 ```json
 {
-  "mode": "dev-guide",
-  "question": "중세 판타지 마을의 색상 팔레트를 추천해줘",
-  "context": {
-    "projectId": "demo-game",
-    "userId": "user-123",
-    "workContext": "morning-briefing"
+  "mode": "lore",
+  "question": "여명산은 어떤 곳인가?",
+  "locale": "ko",
+  "context": { "projectId": "demo-game", "userId": "user-123" }
+}
+```
+
+지원 모드: `dev-guide`, `catalog`, `codex`, `lore`.
+
+### 지식·상태·출처
+
+```http
+GET /knowledge?mode=lore
+GET /knowledge?mode=codex&full=true
+GET /health
+GET /metrics
+GET /sources
+GET /.well-known/agent-card.json
+```
+
+### 스토리 검토
+
+Main UI는 아래 CAT API를 호출합니다.
+
+```http
+POST /api/story-review
+Content-Type: application/json
+```
+
+```json
+{
+  "name": "빛과 기억의 항로 발견",
+  "keywords": ["빛과 기억의 항로", "항로 발견"],
+  "answer": "얼음 구름과 서리 늑대의 서식지를 지나 새로운 항로를 발견한다.",
+  "relatedLoreIds": ["glass-star-origin", "dawn-mountain"],
+  "relatedCodexIds": []
+}
+```
+
+결과의 `verdict`는 `pass`, `review_required`, `reject` 중 하나이며, 인과관계·타임라인·인물·세력·누락 관계·개선안·근거 정보를 포함합니다. `pass` 결과만 승인할 수 있습니다.
+
+```http
+POST /api/story-approve
+Content-Type: application/json
+```
+
+```json
+{
+  "reviewId": "review-abc123",
+  "draft": {
+    "name": "빛과 기억의 항로 발견",
+    "keywords": ["빛과 기억의 항로", "항로 발견"],
+    "answer": "얼음 구름과 서리 늑대의 서식지를 지나 새로운 항로를 발견한다.",
+    "relatedLoreIds": ["glass-star-origin", "dawn-mountain"],
+    "relatedCodexIds": []
   }
 }
 ```
 
-지원 모드:
+승인 결과는 `data/stories/reviewed-stories.json`에 기록되며 실행 중인 CAT의 Lore 검색에도 즉시 반영됩니다.
 
-- `dev-guide`: 기획·아트 가이드 Q&A
-- `catalog`: 게임 카탈로그
-- `codex`: 캐릭터·몬스터·아이템 도감
-- `lore`: 세계관 Q&A
-
-`dev-guide`는 모델을 호출하기 전에 질문을 분류합니다. `기획`, `퀘스트`, `전투 시스템`, `레벨 디자인`, `밸런스`, `규칙`, `스킬 설계`가 포함되면 `planning-guide`로, 그 외에는 `art-guide`로 라우팅합니다.
-
-`/art` 또는 `/? video`로 시작하는 `dev-guide` 질문은 `video-prompt-guide`로 라우팅합니다. 이 에이전트는 스토리·캐릭터 근거를 바탕으로 Video Generation에 바로 입력할 수 있는 프롬프트를 작성합니다. 프롬프트에는 캐릭터 고정 외형, 행동, 장소, 카메라, 조명, 영상 길이·비율, 일관성 유지 조건과 부정 조건이 포함됩니다. 실제 영상 생성 API는 호출하지 않습니다.
-
-예시:
-
-```json
-{
-  "mode": "dev-guide",
-  "question": "/art 은회색 단발 정찰병이 화산재가 내리는 폐허 도시에서 석궁을 준비하는 8초 영상 프롬프트를 작성해줘",
-  "context": {
-    "storyReview": "pass",
-    "character": "은회색 단발, 청록색 눈, 검은 경량 갑옷"
-  },
-  "evidence": [
-    "스토리 검토 통과: 캐릭터 외형과 행동 일관성 확인"
-  ]
-}
-```
-
-예시:
-
-```bash
-curl -X POST http://127.0.0.1:3000/api/ask \
-  -H "content-type: application/json" \
-  -d '{"mode":"codex","question":"루멘의 약점은 무엇인가?","context":{"workContext":"in-progress"}}'
-```
-
-구조화 데이터로 답할 수 있는 `catalog`·`codex` 질문은 모델을 호출하지 않습니다. 자료가 없는 경우 `KNOWLEDGE_NOT_FOUND`를 반환합니다.
-
-동일한 프로젝트·사용자·mode·질문은 오케스트레이터의 인메모리 캐시에서 60초 동안 재사용됩니다. 캐시는 최대 100개 응답만 보관하며, 서버 재시작 시 초기화됩니다.
-
-## 콘텐츠 출처·라이선스 확인
-
-게임 카탈로그·도감·세계관 데이터의 공개 출처와 라이선스는 다음 엔드포인트에서 확인할 수 있습니다. 이 경로는 콘텐츠 출처 확인용 공개 정보만 반환하며, API 키나 사용자 질문은 포함하지 않습니다.
+### A2A HTTP+JSON
 
 ```http
-GET /sources
+POST /message:send
+Content-Type: application/a2a+json
 ```
 
-응답의 각 항목에는 `title`, `sourceUrl`, `license`, `licenseUrl`, `usage`가 포함됩니다. 현재 등록되는 외부 게임 소스는 CC0만 허용됩니다.
+빠른 텍스트 Q&A를 위한 최소 A2A HTTP+JSON 경로입니다. Agent Card는 `GET /.well-known/agent-card.json`에서 제공합니다.
 
-## LangChain 연결
+현재 제공 범위는 동기 텍스트 메시지, `application/a2a+json`, Bearer 인증, Agent Card입니다. Streaming, Task 조회·취소, Push Notification, 파일 파트는 아직 제공하지 않습니다. 일반 업무 오케스트레이터 연동에는 `POST /a2a`도 사용할 수 있습니다.
 
-기본 실행은 외부 패키지가 없는 Mock 모델을 사용합니다. LangChain을 사용할 때는 LangChain 모델의 `invoke(messages)`를 `LangChainModelAdapter`에 주입합니다.
+전체 HTTP 계약은 [`docs/api/openapi.yaml`](docs/api/openapi.yaml), 외부 연결 절차는 [`docs/integration/productivity-a2a.md`](docs/integration/productivity-a2a.md)를 참고합니다.
 
-```js
-import { LangChainModelAdapter } from './src/langchain-adapter.js';
-import { createDefaultOrchestrator, createServer } from './src/server.js';
+## Q&A 동작 원칙
 
-const langChainModel = {
-  async invoke(messages) {
-    // 실제 LangChain ChatModel 또는 Runnable을 연결한다.
-    return { content: `응답: ${messages[1].content}` };
-  },
-};
+- 구조화된 `catalog`·`codex`·`lore` 항목은 가능한 경우 LLM보다 로컬 근거를 먼저 사용합니다.
+- 구체적인 항로·인물·사건 키워드는 일반 세계관 요약보다 우선 검색됩니다.
+- 근거 없는 내용은 사실처럼 저장하지 않습니다.
+- LLM은 설정 근거를 벗어난 내용을 추측하지 않도록 제한합니다.
+- 외부 LLM 호출 오류는 `MODEL_UNAVAILABLE`로 반환합니다.
+- API 키와 모델 키는 소스 코드, Agent Card, 로그, 브라우저에 넣지 않습니다.
+- 동일한 프로젝트·사용자·모드·질문은 기본 60초 동안 인메모리 캐시에서 재사용됩니다.
 
-const server = createServer({
-  orchestrator: createDefaultOrchestrator({
-    modelAdapter: new LangChainModelAdapter({ model: langChainModel }),
-  }),
-});
-server.listen(3000);
-```
-
-실제 LangChain provider 패키지와 모델 설정은 사용하는 제공자의 공식 문서를 따릅니다. Elice ML API의 엔드포인트·인증·요청 형식은 기술 명세가 확보된 뒤 별도 어댑터로 연결하며, 이 API의 외부 계약은 변경하지 않습니다.
-
-## A2A 에이전트 연결
-
-외부 에이전트는 `createHttpAgent()`로 내부 에이전트와 같은 `ask()` 계약으로 감쌀 수 있습니다.
-
-```js
-import { createHttpAgent } from './src/a2a.js';
-
-const remoteLoreAgent = createHttpAgent({
-  agentName: 'remote-lore',
-  endpoint: process.env.LORE_AGENT_URL,
-});
-```
-
-서버 조립 시 원격 에이전트를 mode에 연결할 수 있습니다. URL 문자열을 넘기면 내부에서 HTTP A2A 어댑터를 만듭니다.
-
-```js
-const server = createServer({
-  remoteAgents: { lore: process.env.LORE_AGENT_URL },
-});
-```
-
-오케스트레이터의 `agents` 맵에서 같은 이름의 에이전트를 교체하면 됩니다. 요청은 `requestId`, `mode`, `question`, `context`, `evidence`를 포함하고, 응답은 `answer`, `agent`, `sources`, `usage`, `confidence`로 정규화됩니다. 외부 A2A 서버·레지스트리·재시도 큐는 현재 API가 소유하지 않습니다.
-
-원격 호출은 기본 5초 timeout을 사용합니다. 응답 지연·네트워크 오류·비정상 응답은 모두 `MODEL_UNAVAILABLE`로 변환됩니다.
-
-## 외부 연동 원칙
-
-- 업무생산성 메인페이지와 아침 업무 브리핑 UI는 이 프로젝트가 만들지 않습니다.
-- MCP Host와 중앙 업무 오케스트레이션은 기업 업무생산성 프로젝트가 담당합니다.
-- 이 프로젝트는 MCP Host를 구현하지 않고 REST API와 A2A 전문 에이전트로 연결됩니다.
-- 외부 서비스는 `POST /api/ask`를 호출하고 `context.workContext`에 호출 맥락을 전달합니다.
-- API 키는 클라이언트나 저장소에 넣지 않습니다.
-- `API_KEY`를 설정하면 `/api/ask`, `/a2a`, `/message:send`에 `Authorization: Bearer <API_KEY>`가 필요합니다. `/health`, `/metrics`, `/sources`, Agent Card는 공개입니다.
-- 일반 API 응답에는 추적용 `requestId`가 포함됩니다. A2A HTTP+JSON 오류 응답은 표준 `error.status`와 `details`를 사용합니다.
-- 모델 제공자가 측정하지 않은 토큰 수는 임의로 표시하지 않습니다.
-- 브라우저 호출은 `CORS_ORIGIN`에 지정된 단일 출처만 허용합니다. 기본값은 비활성입니다.
-
-전체 HTTP 계약은 [`docs/api/openapi.yaml`](docs/api/openapi.yaml)에서 확인할 수 있습니다.
-
-업무생산성 서비스 담당자를 위한 연결 절차와 요청 예시는 [`docs/integration/productivity-a2a.md`](docs/integration/productivity-a2a.md)에 정리했습니다.
-
-### A2A HTTP+JSON 표준 메시지 경로
-
-`POST /message:send`는 A2A HTTP+JSON의 동기 텍스트 메시지 경로입니다. 요청과 응답의 콘텐츠 타입은 `application/a2a+json`이며, `ROLE_USER` 텍스트 파트를 받아 `ROLE_AGENT` 텍스트 메시지 하나를 반환합니다. `metadata.mode`, `metadata.context`, `metadata.evidence`로 이 서비스의 게임 Q&A 맥락을 전달할 수 있습니다.
-
-이 구현은 빠른 동기 Q&A용 최소 범위입니다. 스트리밍(`/message:stream`), 작업 조회·취소, 푸시 알림, 파일 파트는 아직 제공하지 않습니다. 따라서 전체 A2A HTTP+JSON binding 구현으로 표현하지 않으며, Agent Card에도 `streaming: false`, `pushNotifications: false`를 명시합니다.
-
-`createDiscoveredHttpAgent()`는 Agent Card의 `supportedInterfaces`에 `HTTP+JSON`이 있으면 표준 메시지 형식으로 호출하고, 없으면 기존 `/a2a` 계약을 사용합니다.
-
-기업 업무생산성 프로젝트는 전문 에이전트 호출 시 `POST /a2a`를 사용합니다. `/api/ask`와 같은 Q&A 입력을 받고 `AgentResponse`에 `confidence`를 추가해 반환합니다.
-
-`/a2a`의 `evidence`는 최대 5개이며, 각 항목은 1~2,000자, 전체는 6,000자 이하여야 합니다.
-
-에이전트 발견 정보는 `GET /.well-known/agent-card.json`에서 제공하며, 공개 URL은 `AGENT_PUBLIC_URL`로 설정합니다. 카드에는 API 키나 모델 키를 포함하지 않습니다.
-
-클라이언트는 `createDiscoveredHttpAgent()`를 사용해 Agent Card를 한 번 조회한 뒤 카드의 `url`로 A2A 요청을 보낼 수 있습니다.
-
-Bearer 인증이 필요하면 agent factory의 `headers`에 `authorization: 'Bearer <API_KEY>'`를 전달합니다.
-## 로컬 데모 UI
-
-외부 업무생산성 서비스와 연결하기 전에 현재 Game Q&A API만 확인하려면 다음처럼 실행합니다.
+## 테스트
 
 ```powershell
-npm start
+npm test
 ```
 
-브라우저에서 `http://localhost:3000/`을 엽니다. 화면에서 질문 모드와 질문을 선택하면 `/api/ask` 응답을 확인할 수 있습니다. API 서버 상태는 화면 상단의 `API 정상` 배지로 확인합니다.
+테스트는 Q&A 라우팅, Lore·Codex·Catalog 조회, 출처 검증, A2A, Agent Card, LLM·Mock 동작, 스토리 검토와 승인 저장을 확인합니다.
 
-로컬에서 인증 없이 테스트하려면 `.env`에서 통합 API 키를 비워 둡니다.
+## 관련 문서
 
-```env
-API_KEY=
-```
-
-`API_KEY`가 비어 있지 않으면 데모 화면의 API 키 입력란에 서버와 동일한 키를 입력해야 합니다. 키는 브라우저에 저장하지 않습니다.
+- [`docs/knowledge-authoring.md`](docs/knowledge-authoring.md): 지식 데이터 작성 규칙
+- [`docs/api/openapi.yaml`](docs/api/openapi.yaml): HTTP API 계약
+- [`docs/integration/productivity-a2a.md`](docs/integration/productivity-a2a.md): 외부 서비스 연결
+- [`data/stories/reviewed-stories.json`](data/stories/reviewed-stories.json): 승인된 신규 스토리
